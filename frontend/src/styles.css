@@ -392,6 +392,20 @@ li + li { margin-top: 6px; }
 .task-hours { color: var(--muted); font-weight: 600; white-space: nowrap; }
 .milestone { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 0.93rem; color: var(--ink-soft); }
 
+/* ---------- LLM-as-a-judge (CV review quality) ---------- */
+.check { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; font-weight: 600; }
+.check input { width: 20px; height: 20px; margin: 2px 0 0; padding: 0; flex: none; accent-color: var(--ink); cursor: pointer; }
+.check small { display: block; font-weight: 500; color: var(--muted); font-size: 0.86rem; margin-top: 2px; }
+
+.quality { border-top: 2px dashed var(--line); padding-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+.quality > h3 { margin-bottom: 0; }
+.pass-badge { display: inline-block; border-radius: 999px; padding: 4px 14px; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
+.pass-badge.pass { background: var(--mint-soft); color: var(--mint); }
+.pass-badge.fail { background: var(--pen-soft); color: var(--pen); }
+.quality-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.quality-why { font-size: 0.93rem; color: var(--ink-soft); }
+.quality-issues { margin-top: 10px; font-size: 0.9rem; color: var(--pen); }
+
 /* ---------- Footer ---------- */
 .footer { max-width: 880px; margin: 64px auto 0; padding: 32px 24px 48px; text-align: center; color: var(--muted); font-size: 0.9rem; }
 .footer p + p { margin-top: 4px; }
@@ -403,7 +417,7 @@ li + li { margin-top: 6px; }
   .demo-stamp { right: 6px; }
   .steps-list { grid-template-columns: 1fr; }
   .steps-list li + li { border-left: none; border-top: 1px solid var(--line); }
-  .meters, .split { grid-template-columns: 1fr; }
+  .meters, .split, .quality-list { grid-template-columns: 1fr; }
   .tabs { grid-template-columns: 1fr 1fr; } /* 5 tabs: 2 + 2 + 1 */
   .nav-links button { padding: 8px; font-size: 0.9rem; }
 }

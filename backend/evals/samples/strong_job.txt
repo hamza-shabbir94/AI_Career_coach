@@ -1,0 +1,14 @@
+Junior Data Analyst - Fresh Basket (fictional online grocery), Berlin
+
+You will:
+- Build and maintain dashboards for the operations and sales teams
+- Write SQL to answer business questions about orders, customers and deliveries
+- Analyse customer behaviour (retention, churn) and share insights with stakeholders
+
+You have:
+- 1+ years of experience as a data analyst (working student experience counts)
+- Strong SQL and experience with a BI tool (Tableau, Looker or Power BI)
+- Python for data analysis (pandas)
+- Good communication in English; German is a plus
+
+Nice to have: A/B testing, BigQuery, e-commerce experience

@@ -1,0 +1,14 @@
+DevOps Engineer - Cloudrift (fictional SaaS company), remote
+
+You will:
+- Build and maintain CI/CD pipelines (GitHub Actions or GitLab CI)
+- Manage cloud infrastructure on AWS with Terraform
+- Run containers with Docker and Kubernetes and monitor them with Prometheus/Grafana
+
+You have:
+- 2+ years of experience in DevOps, SRE or system administration
+- Strong Linux and scripting skills (Bash or Python)
+- Experience with AWS, Docker and at least one CI/CD tool
+- Infrastructure as code (Terraform)
+
+Nice to have: Kubernetes certification, Go

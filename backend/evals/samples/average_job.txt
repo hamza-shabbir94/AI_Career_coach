@@ -1,0 +1,13 @@
+Junior AI Engineer - Lumora Health (fictional health-tech startup), Hamburg
+
+You will:
+- Build features with large language models (LLMs), e.g. summarising medical documents
+- Create and test prompts, and evaluate the quality of model outputs
+- Build small APIs in Python (FastAPI) and deploy them in the cloud
+
+You have:
+- Python skills and experience with at least one LLM API (OpenAI, Anthropic or similar)
+- Basic knowledge of REST APIs and Git
+- An interest in evaluation and testing of AI systems
+
+Nice to have: FastAPI, Docker, RAG (retrieval-augmented generation), experience in healthcare

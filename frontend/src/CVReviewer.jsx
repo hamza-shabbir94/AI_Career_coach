@@ -17,12 +17,62 @@ function Meter({ title, data }) {
   );
 }
 
+// Names for the 4 judge criteria (the backend sends the keys)
+const CRITERIA_LABELS = {
+  factual_accuracy: "Factual accuracy",
+  relevance: "Relevance",
+  actionability: "Actionability",
+  completeness: "Completeness",
+};
+
+// "Review quality" section: the result of the second AI (LLM-as-a-judge)
+function ReviewQuality({ evaluation }) {
+  return (
+    <div className="block quality">
+      <h3>Review quality</h3>
+      <p className="legend">A second AI checked this review against your CV, using a fixed rubric.</p>
+
+      <div className="result-top">
+        <ScoreRing score={evaluation.overall_score} max={5} label="Average of 4 checks" />
+        <div>
+          <span className={evaluation.passed ? "pass-badge pass" : "pass-badge fail"}>
+            {evaluation.passed ? "Passed" : "Not passed"}
+          </span>
+          <p className="lead">
+            {evaluation.passed
+              ? "This review is well supported by your CV. You can trust its advice."
+              : "Some parts of this review are weak. Read the issues below before you follow its advice."}
+          </p>
+          <p className="legend">Passed = every check scores 3 or higher (out of 5).</p>
+        </div>
+      </div>
+
+      <div className="quality-list">
+        {evaluation.criteria.map((c) => (
+          <div key={c.criterion} className="meter">
+            <div className="meter-head">
+              <h3>{CRITERIA_LABELS[c.criterion]}</h3>
+              <span>{c.score}/5</span>
+            </div>
+            <div className="meter-bar"><span style={{ width: `${c.score * 20}%` }} /></div>
+            <p className="quality-why">{c.justification}</p>
+            {c.issues.length > 0 && (
+              <ul className="quality-issues">{c.issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // onBuildPlan comes from App.jsx (see "lifting state up" there)
 export default function CVReviewer({ onBuildPlan }) {
   // Inputs
   const [jobRole, setJobRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [cv, setCv] = useState(EMPTY_CV); // { mode, file, text }, see CVInput.jsx
+  const [evaluate, setEvaluate] = useState(false); // run the LLM-as-a-judge check too?
 
   // Result + UI state
   const [review, setReview] = useState(null);
@@ -39,6 +89,7 @@ export default function CVReviewer({ onBuildPlan }) {
     form.append("job_role", jobRole);
     form.append("job_description", jobDescription);
     addCVToForm(form, cv);
+    form.append("evaluate", evaluate ? "true" : "false"); // FastAPI turns this into a bool
 
     setLoading(true);
     setError("");
@@ -113,6 +164,9 @@ export default function CVReviewer({ onBuildPlan }) {
           )}
         </div>
 
+        {/* Only there if the checkbox was ticked */}
+        {review.evaluation && <ReviewQuality evaluation={review.evaluation} />}
+
         <div className="actions">
           <button
             className="btn btn-highlight"
@@ -161,8 +215,16 @@ export default function CVReviewer({ onBuildPlan }) {
 
       <CVInput value={cv} onChange={setCv} />
 
+      <label className="check">
+        <input type="checkbox" checked={evaluate} onChange={(e) => setEvaluate(e.target.checked)} />
+        <span>
+          Quality check with a second AI (LLM-as-a-judge)
+          <small>Takes about twice as long. A second AI checks the review against your CV.</small>
+        </span>
+      </label>
+
       <button className="btn btn-primary btn-lg" onClick={reviewCV} disabled={loading}>
-        {loading ? "Reviewing your CV…" : "Review my CV"}
+        {loading ? (evaluate ? "Reviewing and checking…" : "Reviewing your CV…") : "Review my CV"}
       </button>
       {error && <p className="error">{error}</p>}
     </div>

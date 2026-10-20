@@ -85,6 +85,40 @@ class CVReview(BaseModel):
     rewrites: list[Rewrite]       # example before/after lines
 
 
+# ---------- LLM-as-a-Judge: a second AI checks the CV review ----------
+
+CriterionName = Literal["factual_accuracy", "relevance", "actionability", "completeness"]
+
+
+class CriterionScore(BaseModel):
+    criterion: CriterionName
+    score: int                    # 1 to 5 (checked in judge.py)
+    justification: str            # why this score, with quotes from the CV
+    issues: list[str]             # specific problems found (empty if none)
+
+
+class JudgeResult(BaseModel):
+    """What the JUDGE AI must return"""
+    criteria: list[CriterionScore]
+
+
+class Evaluation(BaseModel):
+    """What we return: the judge's scores + numbers calculated in Python"""
+    criteria: list[CriterionScore]
+    overall_score: float          # average of the 4 scores, one decimal
+    passed: bool                  # True only if every criterion is 3 or more
+
+
+class CVReviewResult(CVReview):
+    """
+    What /cv/review sends to React: all CVReview fields + the optional evaluation.
+    (class B(A) = "inheritance": B gets every field of A and adds its own.)
+    We do NOT give this model to the reviewer AI, otherwise it would have to
+    invent an evaluation of itself.
+    """
+    evaluation: Evaluation | None = None
+
+
 # ======================= Bonus: Job-fit score =======================
 # (The request is a FORM, like the CV Reviewer, because it can carry a file.)
 

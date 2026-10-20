@@ -1,0 +1,28 @@
+Jonas Becker
+jonas.becker@example.com | Hamburg
+
+Profile
+Motivated and hard-working person who is passionate about AI and technology. Team player
+with good communication skills, looking for a new challenge.
+
+Work Experience
+IT Support Specialist, Hafenlogistik AG (fictional), Hamburg, 2021 - present
+- Responsible for helping colleagues with IT problems
+- Worked on a project to improve the ticket system
+- Wrote some Python scripts for the team
+- Helped with the migration to Microsoft 365
+
+Intern, Webagentur Nord (fictional), Hamburg, 2020
+- Helped with websites
+- Did testing
+
+Education
+AI Engineering Bootcamp, Ironhack, 2024
+B.Sc. Computer Science (not finished), Universitaet Hamburg, 2017-2020
+
+Skills
+Python, machine learning, ChatGPT, SQL, Linux, Microsoft Office, teamwork, communication
+
+Projects
+- Chatbot: made a chatbot with the OpenAI API
+- Image classifier: trained a model to classify images of cats and dogs

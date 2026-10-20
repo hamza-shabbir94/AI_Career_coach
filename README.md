@@ -17,7 +17,8 @@ Ironhack AI Engineer Bootcamp project.
 | ⭐ | Bonus: Job-fit score | ✅ Done |
 | ⭐ | Bonus: Company prep (with web search) | ✅ Done |
 | ⭐ | Bonus: Learning roadmap | ✅ Done |
-| ⭐ | Bonus: job search, LLM-as-a-judge | 💡 Next |
+| ⭐ | Bonus: LLM-as-a-judge (checks the quality of CV reviews) | ✅ Done |
+| ⭐ | Bonus: job search | 💡 Next |
 
 ### 1. Mock Interview Mode
 1. **Setup** – enter the role (e.g. "Junior AI Engineer") and optionally paste a job description.
@@ -33,6 +34,8 @@ Ironhack AI Engineer Bootcamp project.
 2. **Upload** your CV (PDF, DOCX, TXT – max 4 MB) **or paste** it as text.
 3. Get: overall fit score, scores for content / clarity / formatting, spelling & grammar errors
    with fixes, matching and missing skills, top improvements, and before/after rewrites of weak lines.
+4. **Optional quality check:** tick *"Quality check with a second AI (LLM-as-a-judge)"*. A second AI
+   scores the review itself (see [LLM-as-a-judge](#llm-as-a-judge) below). It takes about twice as long.
 
 ### ⭐ Bonus: Job-fit score
 1. Paste a job ad (and optionally the role), then upload or paste your CV.
@@ -70,16 +73,20 @@ career-coach/
 ├── .gitignore                ← keeps .env and node_modules out of git
 ├── backend/
 │   ├── main.py               ← creates the app, CORS, plugs in the routes
-│   ├── ai.py                 ← one shared OpenAI client + model name
+│   ├── ai.py                 ← one shared OpenAI client + model names (MODEL, JUDGE_MODEL)
 │   ├── models.py             ← Pydantic models (shape of all data)
 │   ├── prompts.py            ← all AI prompts
 │   ├── cv_reader.py          ← PDF / DOCX / TXT → text + get_cv_text() (shared CV checks)
+│   ├── judge.py              ← LLM-as-a-judge: scores a CV review, Python calculates the result
 │   ├── routes/
 │   │   ├── interview.py      ← /interview/next, /interview/feedback
 │   │   ├── cv.py             ← /cv/review
 │   │   ├── job_fit.py        ← /job-fit (+ the match % maths)
 │   │   ├── company.py        ← /company/prep (web search + prep sheet)
 │   │   └── roadmap.py        ← /roadmap (learning plan + hours check)
+│   ├── evals/
+│   │   ├── run_judge.py      ← offline test: review + judge 3 sample CVs → table + results.csv
+│   │   └── samples/          ← 3 fictional CVs + job ads (strong, average, weak)
 │   ├── requirements.txt
 │   └── .env.example
 └── frontend/
@@ -127,7 +134,7 @@ of `styles.css`, and every screen updates.
 | GET | `/` | – | `{"status": "ok"}` |
 | POST | `/interview/next` | JSON: `job_role`, `job_description`, `summary`, `last_question`, `last_answer`, `answers_given`, optional `company` (max 100 chars) + `company_notes` (max 6000 chars) | `reply`, `summary`, `question_number`, `max_questions`, `finished` |
 | POST | `/interview/feedback` | JSON: `job_role`, `summary`, optional `company` + `company_notes` | `score`, `summary`, `strengths`, `weaknesses`, `improvements` |
-| POST | `/cv/review` | **Form**: `job_role`, `job_description`, and `file` **or** `cv_text` | `overall_score`, `summary`, `content`, `clarity`, `formatting`, `errors`, `matching_skills`, `missing_skills`, `improvements`, `rewrites` |
+| POST | `/cv/review` | **Form**: `job_role`, `job_description`, `file` **or** `cv_text`, optional `evaluate` (`true`/`false`, default `false`) | `overall_score`, `summary`, `content`, `clarity`, `formatting`, `errors`, `matching_skills`, `missing_skills`, `improvements`, `rewrites`, `evaluation` (`null`, or `criteria`, `overall_score`, `passed` when `evaluate=true`) |
 | POST | `/job-fit` | **Form**: `job_description` (min 50 chars), `job_role` (optional), and `file` **or** `cv_text` | `analysis` (`summary`, `requirements`, `keywords_to_add`, `quick_wins`), `match_percent`, `verdict` |
 | POST | `/company/prep` | JSON: `company` (1-100 chars), `job_role`, `job_description` (optional) | `analysis` (`overview`, `recent_news`, `culture`, `likely_questions`, `questions_to_ask`, `tips`), `sources` (`title`, `url`) |
 | POST | `/roadmap` | JSON: `job_role`, `level` (`beginner` / `some experience` / `experienced`), `hours_per_week` (2-40), `weeks` (4, 8 or 12), `gaps` (optional list), `context` (optional, max 5000 chars) | `roadmap` (`summary`, `weeks`, `portfolio_project`, `resources`), `total_hours`, `warnings` |
@@ -202,6 +209,54 @@ numbers ("greater or equal 2, less or equal 40"), and `Literal[4, 8, 12]` allows
 **CORS** – controls which websites may call the backend. `*` locally; your frontend URL in production.
 
 **Environment variables** – secrets (API key) and settings live in `.env`, never in the code or git.
+
+**Inheritance in Pydantic** – `class CVReviewResult(CVReview)` gets every field of `CVReview` and
+adds `evaluation`. The reviewer AI fills in `CVReview` (so it never has to grade itself); the
+endpoint returns `CVReviewResult`.
+
+---
+
+## LLM-as-a-judge
+
+**What is it?** We can't check every AI answer by hand. So a **second AI call** (the *judge*)
+grades the first one (the *reviewer*) with a fixed **rubric**. It's like a teacher marking an exam
+with a marking scheme. The judge gets the CV in `<cv>`, the job ad in `<job_ad>` and the review as
+JSON in `<review>`, and must **quote the CV** as evidence for every score.
+
+**Rubric** (in `prompts.py`, scores 1-5, with 2 and 4 in between):
+
+| Criterion | 5 = excellent | 3 = okay | 1 = bad |
+|-----------|---------------|----------|---------|
+| `factual_accuracy` | every claim can be found in the CV | 1-2 small unsupported claims | invents skills, jobs, numbers or errors |
+| `relevance` | almost every point is about this role / job ad | mix of specific and generic advice | generic advice for any CV |
+| `actionability` | every tip says what to change and how | some tips concrete, some vague | only vague tips |
+| `completeness` | content, clarity, formatting, errors, skills and rewrites all covered well | all there, 1-2 parts thin | several parts missing or empty |
+
+**Python does the maths:** the judge only gives the 4 scores. `judge.py` keeps one score per
+criterion (in rubric order), keeps it inside 1-5, and calculates:
+- `overall_score` = average of the 4, rounded to 1 decimal
+- `passed` = `true` only if **every** criterion is 3 or more (one bad area is enough to fail,
+  e.g. a review that invents facts is not "okay" because its tips are good)
+
+**Use a different judge model.** A model tends to rate its own writing too high (*self-preference
+bias*). Set `JUDGE_MODEL` in `.env` (e.g. `JUDGE_MODEL=gpt-4o`) to use a stronger model as the judge.
+If it is empty, the judge uses `OPENAI_MODEL`.
+
+**Two ways to use it:**
+1. **In the app:** tick the checkbox in CV review. The result gets a "Review quality" section.
+2. **Offline evaluation:** run the reviewer + judge on 3 fictional sample CVs and compare scores:
+   ```bash
+   cd backend
+   conda activate career-coach
+   python -m evals.run_judge
+   ```
+   This makes 6 AI calls (a few cents). It prints a table and saves `backend/evals/results.csv`
+   (not in git). Run it **before and after** you change a prompt or model: if the scores drop,
+   your change made the reviews worse. Add your own samples as `<name>_cv.txt` + `<name>_job.txt`
+   in `evals/samples/` and add them to the `SAMPLES` list in `run_judge.py`.
+
+**Limits:** the judge is also an AI, so it can be wrong too. Its scores can change a little
+between runs. Use it to spot problems and compare versions, not as the absolute truth.
 
 ---
 
@@ -296,4 +351,5 @@ In the **backend** project, add `ALLOWED_ORIGINS` = your frontend URL
 - [x] Bonus: Learning roadmap (connected to the other features)
 - [x] Mock interview for a specific company (connected to Company prep)
 - [ ] Deploy to Vercel
-- [ ] More bonus features (job search, LLM-as-a-judge)
+- [x] Bonus: LLM-as-a-judge + offline eval script
+- [ ] More bonus features (job search)

@@ -1,0 +1,31 @@
+MAYA LINDQVIST
+Junior Data Analyst | maya.lindqvist@example.com | Berlin, Germany | github.com/example-maya
+
+SUMMARY
+Data analyst with 1.5 years of experience turning sales and customer data into decisions.
+Strong in SQL, Python (pandas) and Tableau. Ironhack Data Analytics graduate.
+
+EXPERIENCE
+Data Analyst (Working Student) - Brightcart GmbH (fictional), Berlin | 03/2023 - 08/2024
+- Built 6 Tableau dashboards for the sales team, used weekly by 25 people.
+- Wrote SQL queries on a 40-million-row orders table; cut report run time from 20 to 3 minutes.
+- Analysed churn with Python (pandas); found that late deliveries doubled churn, which led
+  to a new delivery-delay alert that reduced churn by 8% in one quarter.
+- Automated a weekly Excel report with Python, saving the team about 4 hours per week.
+
+Customer Service Agent - Nordline Telecom (fictional), Berlin | 01/2021 - 02/2023
+- Handled 60+ customer cases per day with a 94% satisfaction score.
+- Tracked common complaints in a spreadsheet and presented the top 5 issues to my manager monthly.
+
+EDUCATION
+Data Analytics Bootcamp - Ironhack Berlin | 09/2022 - 12/2022
+B.A. Business Administration - Freie Universitaet Berlin | 2017 - 2020
+
+SKILLS
+SQL (PostgreSQL, BigQuery), Python (pandas, matplotlib), Tableau, Excel (pivot tables),
+A/B testing basics, Git
+Languages: English (C1), German (C1), Swedish (native)
+
+PROJECTS
+- Berlin bike-sharing analysis: cleaned 2 million trips with pandas and built a Tableau story
+  showing peak-hour shortages by district.
