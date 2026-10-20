@@ -18,6 +18,9 @@ class NextRequest(BaseModel):
     last_question: str = ""     # empty on the very first call
     last_answer: str = ""       # empty on the very first call
     answers_given: int = 0      # how many answers the user has sent
+    # Optional: practise for a specific company (filled in from Company prep)
+    company: str = Field("", max_length=100)
+    company_notes: str = Field("", max_length=6000)  # overview, culture, likely questions
 
 
 class NextStep(BaseModel):
@@ -38,6 +41,8 @@ class InterviewReply(BaseModel):
 class FeedbackRequest(BaseModel):
     job_role: str
     summary: str
+    company: str = Field("", max_length=100)          # optional, see NextRequest
+    company_notes: str = Field("", max_length=6000)   # lets feedback check company facts
 
 
 class Feedback(BaseModel):

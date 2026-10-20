@@ -33,7 +33,10 @@ def next_question(req: NextRequest):
     # One AI call returns BOTH the updated summary and the next question
     response = client.responses.parse(
         model=MODEL,
-        instructions=interviewer_prompt(req.job_role, req.job_description, question_number, finished),
+        instructions=interviewer_prompt(
+            req.job_role, req.job_description, question_number, finished,
+            req.company, req.company_notes,  # both empty for a normal interview
+        ),
         input=input_text,
         text_format=NextStep,
     )
@@ -52,7 +55,7 @@ def next_question(req: NextRequest):
 def interview_feedback(req: FeedbackRequest):
     response = client.responses.parse(
         model=MODEL,
-        instructions=interview_feedback_prompt(req.job_role),
+        instructions=interview_feedback_prompt(req.job_role, req.company, req.company_notes),
         input=f"Interview notes:\n<notes>\n{req.summary}\n</notes>",
         text_format=Feedback,
     )

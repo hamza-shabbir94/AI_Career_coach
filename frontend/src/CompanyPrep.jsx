@@ -1,7 +1,21 @@
 import { useState } from "react";
 import { postJson } from "./api";
 
-export default function CompanyPrep() {
+const MAX_NOTES_CHARS = 6000; // same limit as the backend (company_notes in models.py)
+
+// Turn the prep sheet into short plain-text notes for the mock interviewer
+function buildCompanyNotes(analysis) {
+  const list = (items) => items.map((item) => `- ${item}`).join("\n");
+  const notes = [
+    `Overview: ${analysis.overview}`,
+    `Culture and values:\n${list(analysis.culture)}`,
+    `Likely questions:\n${list(analysis.likely_questions.map((q) => q.question))}`,
+  ].join("\n\n");
+  return notes.slice(0, MAX_NOTES_CHARS);
+}
+
+// onPractise comes from App.jsx (see "lifting state up" there)
+export default function CompanyPrep({ onPractise }) {
   // Inputs
   const [company, setCompany] = useState("");
   const [jobRole, setJobRole] = useState("");
@@ -95,7 +109,20 @@ export default function CompanyPrep() {
           </div>
         )}
 
-        <button className="btn btn-primary" onClick={() => setResult(null)}>Prepare for another company</button>
+        <div className="actions">
+          <button
+            className="btn btn-highlight"
+            onClick={() => onPractise({
+              job_role: jobRole,
+              company,
+              company_notes: buildCompanyNotes(analysis),
+              job_description: jobDescription,
+            })}
+          >
+            Practise an interview for {company}
+          </button>
+          <button className="btn btn-primary" onClick={() => setResult(null)}>Prepare for another company</button>
+        </div>
       </div>
     );
   }

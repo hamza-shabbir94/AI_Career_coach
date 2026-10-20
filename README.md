@@ -23,6 +23,10 @@ Ironhack AI Engineer Bootcamp project.
 1. **Setup** – enter the role (e.g. "Junior AI Engineer") and optionally paste a job description.
 2. **Interview** – the AI asks 5 questions, one at a time, with follow-ups based on your answers.
 3. **Feedback** – score out of 10, strengths, weaknesses and tips to improve.
+4. **Practise for a company** – from a Company prep result, click **"Practise an interview for
+   …"**. The interviewer then works at that company: it uses the research notes to ask about
+   the company's products and values, and the feedback also judges how well you knew the
+   company. Click **"Remove company"** on the setup screen to go back to a normal interview.
 
 ### 2. CV Reviewer Mode
 1. Enter the role (and optionally the job description).
@@ -43,6 +47,8 @@ Ironhack AI Engineer Bootcamp project.
    culture, interview process and tech stack.
 3. Get a prep sheet: overview, news, culture, 6 likely questions (why they ask + how to answer),
    questions to ask them, tips, and links to the sources it used.
+4. Click **"Practise an interview for …"** to start a mock interview for that company,
+   with the role, job ad and short company notes already filled in.
 
 ### ⭐ Bonus: Learning roadmap
 1. Enter the role, your level, hours per week (2-40) and the length (4, 8 or 12 weeks).
@@ -102,7 +108,8 @@ career-coach/
 **Frontend:** `index.html` → `main.jsx` → `App.jsx` (shows `Hero.jsx` + tabs)
 → `InterviewMode.jsx`, `CVReviewer.jsx`, `JobFit.jsx` or `CompanyPrep.jsx` → all use `api.js`
 to talk to the backend. `CVReviewer.jsx` and `JobFit.jsx` share `CVInput.jsx`.
-`RoadmapBuilder.jsx` gets its starting data from `App.jsx` (see *Lifting state up* below).
+`RoadmapBuilder.jsx` and `InterviewMode.jsx` can get starting data from `App.jsx`
+(see *Lifting state up* below).
 
 ## Design
 
@@ -118,8 +125,8 @@ of `styles.css`, and every screen updates.
 | Method | Path | Sends | Returns |
 |--------|------|-------|---------|
 | GET | `/` | – | `{"status": "ok"}` |
-| POST | `/interview/next` | JSON: `job_role`, `job_description`, `summary`, `last_question`, `last_answer`, `answers_given` | `reply`, `summary`, `question_number`, `max_questions`, `finished` |
-| POST | `/interview/feedback` | JSON: `job_role`, `summary` | `score`, `summary`, `strengths`, `weaknesses`, `improvements` |
+| POST | `/interview/next` | JSON: `job_role`, `job_description`, `summary`, `last_question`, `last_answer`, `answers_given`, optional `company` (max 100 chars) + `company_notes` (max 6000 chars) | `reply`, `summary`, `question_number`, `max_questions`, `finished` |
+| POST | `/interview/feedback` | JSON: `job_role`, `summary`, optional `company` + `company_notes` | `score`, `summary`, `strengths`, `weaknesses`, `improvements` |
 | POST | `/cv/review` | **Form**: `job_role`, `job_description`, and `file` **or** `cv_text` | `overall_score`, `summary`, `content`, `clarity`, `formatting`, `errors`, `matching_skills`, `missing_skills`, `improvements`, `rewrites` |
 | POST | `/job-fit` | **Form**: `job_description` (min 50 chars), `job_role` (optional), and `file` **or** `cv_text` | `analysis` (`summary`, `requirements`, `keywords_to_add`, `quick_wins`), `match_percent`, `verdict` |
 | POST | `/company/prep` | JSON: `company` (1-100 chars), `job_role`, `job_description` (optional) | `analysis` (`overview`, `recent_news`, `culture`, `likely_questions`, `questions_to_ask`, `tips`), `sources` (`title`, `url`) |
@@ -177,7 +184,14 @@ screens (e.g. `CVReviewer` and `RoadmapBuilder`) cannot share state directly. So
 in their common parent, `App.jsx`: it keeps `roadmapSeed` and passes a function `buildPlan` *down*
 to the result screens. When you click "Build my learning plan", the child calls `buildPlan(...)`,
 which sends the data *up* to `App`. `App` then passes `roadmapSeed` *down* to `RoadmapBuilder`,
-whose `useEffect` fills in the form.
+whose `useEffect` fills in the form. The same pattern connects Company prep to the Mock interview:
+`CompanyPrep` calls `practiseInterview(...)`, `App` keeps `interviewSeed`, and `InterviewMode`
+receives it as the `seed` prop.
+
+**Optional prompt parts** – the interview prompts only add the company rules when a company is
+given (`if company.strip(): ...`). With no company, the prompt is exactly the normal one, so one
+endpoint serves both kinds of interview. The interviewer also writes "showed company knowledge?"
+into its notes, because the feedback call only sees those notes.
 
 **Input validation with Pydantic** – `Field(min_length=1, max_length=100)` rejects an empty or
 too-long company name before any (paid) AI call happens. `Field(ge=2, le=40)` does the same for
@@ -280,5 +294,6 @@ In the **backend** project, add `ALLOWED_ORIGINS` = your frontend URL
 - [x] Bonus: Job-fit score
 - [x] Bonus: Company prep with web search
 - [x] Bonus: Learning roadmap (connected to the other features)
+- [x] Mock interview for a specific company (connected to Company prep)
 - [ ] Deploy to Vercel
 - [ ] More bonus features (job search, LLM-as-a-judge)

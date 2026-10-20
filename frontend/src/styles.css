@@ -249,6 +249,16 @@ input::placeholder, textarea::placeholder { color: #98a2b8; }
 .memory summary:hover { color: var(--ink); }
 .memory pre { white-space: pre-wrap; font-family: inherit; margin: 10px 0 0; padding: 14px; background: var(--desk); border-radius: var(--radius-sm); line-height: 1.6; }
 
+/* Shown on the setup screen when practising for a company */
+.company-banner {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--highlight-soft); border-left: 5px solid var(--highlight);
+  border-radius: var(--radius-sm); padding: 12px 16px; font-size: 0.95rem;
+}
+.btn-link-small { border: none; background: none; padding: 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.btn-link-small:hover { color: var(--pen); }
+.interview-bar .bar-company { font-size: inherit; color: var(--muted); }
+
 /* ---------- Results (both features) ---------- */
 .result-top { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
 .result-top h2 { font-size: 1.75rem; margin-bottom: 8px; }

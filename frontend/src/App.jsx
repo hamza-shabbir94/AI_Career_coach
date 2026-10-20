@@ -31,6 +31,8 @@ export default function App() {
   // Learning plan screen directly, so App (their shared parent) keeps the data for them.
   // roadmapSeed = { job_role, gaps, context } to pre-fill the Learning plan form.
   const [roadmapSeed, setRoadmapSeed] = useState(null);
+  // interviewSeed = { job_role, company, company_notes, job_description } from Company prep.
+  const [interviewSeed, setInterviewSeed] = useState(null);
 
   // Used by the hero buttons and the nav: pick a tab and scroll to the app
   function openTab(id) {
@@ -42,6 +44,12 @@ export default function App() {
   function buildPlan(seed) {
     setRoadmapSeed(seed); // a new object each click, so RoadmapBuilder always notices it
     openTab("roadmap");
+  }
+
+  // Same idea: Company prep calls this to start a mock interview for that company
+  function practiseInterview(seed) {
+    setInterviewSeed(seed);
+    openTab("interview");
   }
 
   return (
@@ -93,10 +101,10 @@ export default function App() {
 
           {/* All stay mounted, so switching tabs does not lose your progress */}
           <div className="sheet">
-            <div hidden={tab !== "interview"}><InterviewMode onBuildPlan={buildPlan} /></div>
+            <div hidden={tab !== "interview"}><InterviewMode onBuildPlan={buildPlan} seed={interviewSeed} /></div>
             <div hidden={tab !== "cv"}><CVReviewer onBuildPlan={buildPlan} /></div>
             <div hidden={tab !== "fit"}><JobFit onBuildPlan={buildPlan} /></div>
-            <div hidden={tab !== "company"}><CompanyPrep /></div>
+            <div hidden={tab !== "company"}><CompanyPrep onPractise={practiseInterview} /></div>
             <div hidden={tab !== "roadmap"}><RoadmapBuilder seed={roadmapSeed} /></div>
           </div>
         </section>

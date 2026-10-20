@@ -5,14 +5,18 @@ import ScoreRing from "./ScoreRing";
 // Quick picks so users can start with one click
 const EXAMPLE_ROLES = ["Junior AI Engineer", "DevOps Engineer", "Data Analyst", "Product Manager"];
 
-// onBuildPlan comes from App.jsx (see "lifting state up" there)
-export default function InterviewMode({ onBuildPlan }) {
+// From App.jsx (see "lifting state up" there):
+// - onBuildPlan: send the feedback to the Learning plan tab
+// - seed: { job_role, company, company_notes, job_description } from Company prep
+export default function InterviewMode({ onBuildPlan, seed }) {
   // Which screen we show: "setup" -> "interview" -> "feedback"
   const [stage, setStage] = useState("setup");
 
   // Setup inputs
   const [jobRole, setJobRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [company, setCompany] = useState("");           // empty = normal interview
+  const [companyNotes, setCompanyNotes] = useState(""); // research from Company prep
 
   // Interview state
   const [messages, setMessages] = useState([]); // ONLY for showing the chat on screen
@@ -28,6 +32,22 @@ export default function InterviewMode({ onBuildPlan }) {
   const [error, setError] = useState("");
 
   const answersGiven = messages.filter((m) => m.role === "user").length;
+
+  // A new seed from Company prep: fill in the form and start fresh on the setup screen
+  useEffect(() => {
+    if (!seed) return;
+    restart();
+    setJobRole(seed.job_role || "");
+    setCompany(seed.company || "");
+    setCompanyNotes(seed.company_notes || "");
+    setJobDescription(seed.job_description || "");
+  }, [seed]);
+
+  // "Remove company" link: back to a normal interview
+  function removeCompany() {
+    setCompany("");
+    setCompanyNotes("");
+  }
 
   // Keep the chat scrolled to the newest message
   const chatEndRef = useRef(null);
@@ -48,6 +68,8 @@ export default function InterviewMode({ onBuildPlan }) {
         last_question: lastQuestion,
         last_answer: lastAnswer,
         answers_given: answersCount,
+        company,                      // both "" for a normal interview
+        company_notes: companyNotes,
       });
       setMessages([...chat, { role: "assistant", content: data.reply }]);
       setSummary(data.summary); // save the updated memory
@@ -88,7 +110,12 @@ export default function InterviewMode({ onBuildPlan }) {
     setLoading(true);
     setError("");
     try {
-      const data = await postJson("/interview/feedback", { job_role: jobRole, summary });
+      const data = await postJson("/interview/feedback", {
+        job_role: jobRole,
+        summary,
+        company,
+        company_notes: companyNotes,
+      });
       setFeedback(data);
       setStage("feedback");
     } catch (err) {
@@ -114,9 +141,19 @@ export default function InterviewMode({ onBuildPlan }) {
     return (
       <div className="pane">
         <div className="pane-head">
-          <h2>Which job are you interviewing for?</h2>
+          <h2>{company ? `Your interview at ${company}` : "Which job are you interviewing for?"}</h2>
           <p>The interviewer will ask 5 questions for this role, one at a time.</p>
         </div>
+
+        {company && (
+          <div className="company-banner">
+            <p>
+              Practising for <strong>{company}</strong>. Expect questions about the company,
+              its products and its values.
+            </p>
+            <button className="btn-link-small" onClick={removeCompany}>Remove company</button>
+          </div>
+        )}
 
         <div className="field">
           <label htmlFor="role">Role</label>
@@ -155,7 +192,7 @@ export default function InterviewMode({ onBuildPlan }) {
     return (
       <div className="pane">
         <div className="result-top">
-          <ScoreRing score={feedback.score} label={`Interview for ${jobRole}`} />
+          <ScoreRing score={feedback.score} label={`Interview for ${jobRole}${company ? ` at ${company}` : ""}`} />
           <div>
             <h2>Your interview feedback</h2>
             <p className="lead">{feedback.summary}</p>
@@ -200,7 +237,7 @@ export default function InterviewMode({ onBuildPlan }) {
     <div className="pane">
       <div className="interview-bar">
         <div>
-          <strong>{jobRole}</strong>
+          <strong>{jobRole}{company && <span className="bar-company"> · {company}</span>}</strong>
           <span>{finished ? "Interview complete" : `Question ${questionNumber} of ${maxQuestions}`}</span>
         </div>
         {/* One segment per question; filled = answered */}
