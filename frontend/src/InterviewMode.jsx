@@ -5,7 +5,8 @@ import ScoreRing from "./ScoreRing";
 // Quick picks so users can start with one click
 const EXAMPLE_ROLES = ["Junior AI Engineer", "DevOps Engineer", "Data Analyst", "Product Manager"];
 
-export default function InterviewMode() {
+// onBuildPlan comes from App.jsx (see "lifting state up" there)
+export default function InterviewMode({ onBuildPlan }) {
   // Which screen we show: "setup" -> "interview" -> "feedback"
   const [stage, setStage] = useState("setup");
 
@@ -177,7 +178,19 @@ export default function InterviewMode() {
           <ol>{feedback.improvements.map((s, i) => <li key={i}>{s}</li>)}</ol>
         </div>
 
-        <button className="btn btn-primary" onClick={restart}>Practise again</button>
+        <div className="actions">
+          <button
+            className="btn btn-highlight"
+            onClick={() => onBuildPlan({
+              job_role: jobRole,
+              gaps: feedback.weaknesses,
+              context: `Mock interview feedback (${feedback.score}/10): ${feedback.summary}`,
+            })}
+          >
+            Build my learning plan
+          </button>
+          <button className="btn btn-primary" onClick={restart}>Practise again</button>
+        </div>
       </div>
     );
   }

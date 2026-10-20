@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()  # read .env BEFORE importing files that use the API key
 
-from routes import company, cv, interview, job_fit  # noqa: E402
+from routes import company, cv, interview, job_fit, roadmap  # noqa: E402
 
 app = FastAPI(title="AI Career Coach")
 
@@ -35,6 +35,7 @@ app.include_router(interview.router)  # /interview/...
 app.include_router(cv.router)         # /cv/...
 app.include_router(job_fit.router)    # /job-fit
 app.include_router(company.router)    # /company/...
+app.include_router(roadmap.router)    # /roadmap
 
 
 @app.get("/")

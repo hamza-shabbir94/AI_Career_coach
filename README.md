@@ -16,7 +16,8 @@ Ironhack AI Engineer Bootcamp project.
 | 3 | One app with all features + deployment (Vercel) | ✅ Built · ⏳ deploy |
 | ⭐ | Bonus: Job-fit score | ✅ Done |
 | ⭐ | Bonus: Company prep (with web search) | ✅ Done |
-| ⭐ | Bonus: job search, learning roadmap, LLM-as-a-judge | 💡 Next |
+| ⭐ | Bonus: Learning roadmap | ✅ Done |
+| ⭐ | Bonus: job search, LLM-as-a-judge | 💡 Next |
 
 ### 1. Mock Interview Mode
 1. **Setup** – enter the role (e.g. "Junior AI Engineer") and optionally paste a job description.
@@ -43,6 +44,16 @@ Ironhack AI Engineer Bootcamp project.
 3. Get a prep sheet: overview, news, culture, 6 likely questions (why they ask + how to answer),
    questions to ask them, tips, and links to the sources it used.
 
+### ⭐ Bonus: Learning roadmap
+1. Enter the role, your level, hours per week (2-40) and the length (4, 8 or 12 weeks).
+   Add the skills you want to work on (up to 12) and optional background.
+2. Get a week-by-week plan: a focus per week, tasks tagged **learn / build / practise** with hours,
+   a milestone per week, one portfolio project and well-known resources (names only, no links).
+3. **Python checks the plan:** it adds up the hours of every week and warns you if a week does not
+   fit your time, or if the AI made a different number of weeks than you asked for.
+4. **Connected to the other features:** the results of CV review, Job fit and Mock interview have a
+   **"Build my learning plan"** button. It opens this tab with the role and your gaps filled in.
+
 ---
 
 ## Project structure
@@ -61,7 +72,8 @@ career-coach/
 │   │   ├── interview.py      ← /interview/next, /interview/feedback
 │   │   ├── cv.py             ← /cv/review
 │   │   ├── job_fit.py        ← /job-fit (+ the match % maths)
-│   │   └── company.py        ← /company/prep (web search + prep sheet)
+│   │   ├── company.py        ← /company/prep (web search + prep sheet)
+│   │   └── roadmap.py        ← /roadmap (learning plan + hours check)
 │   ├── requirements.txt
 │   └── .env.example
 └── frontend/
@@ -79,6 +91,7 @@ career-coach/
         ├── CVReviewer.jsx    ← feature 2 screen
         ├── JobFit.jsx        ← bonus: job-fit score screen
         ├── CompanyPrep.jsx   ← bonus: company prep screen
+        ├── RoadmapBuilder.jsx ← bonus: learning plan screen
         ├── api.js            ← all calls to the backend
         └── styles.css        ← all styles; colours and fonts are at the top
 ```
@@ -89,6 +102,7 @@ career-coach/
 **Frontend:** `index.html` → `main.jsx` → `App.jsx` (shows `Hero.jsx` + tabs)
 → `InterviewMode.jsx`, `CVReviewer.jsx`, `JobFit.jsx` or `CompanyPrep.jsx` → all use `api.js`
 to talk to the backend. `CVReviewer.jsx` and `JobFit.jsx` share `CVInput.jsx`.
+`RoadmapBuilder.jsx` gets its starting data from `App.jsx` (see *Lifting state up* below).
 
 ## Design
 
@@ -109,6 +123,7 @@ of `styles.css`, and every screen updates.
 | POST | `/cv/review` | **Form**: `job_role`, `job_description`, and `file` **or** `cv_text` | `overall_score`, `summary`, `content`, `clarity`, `formatting`, `errors`, `matching_skills`, `missing_skills`, `improvements`, `rewrites` |
 | POST | `/job-fit` | **Form**: `job_description` (min 50 chars), `job_role` (optional), and `file` **or** `cv_text` | `analysis` (`summary`, `requirements`, `keywords_to_add`, `quick_wins`), `match_percent`, `verdict` |
 | POST | `/company/prep` | JSON: `company` (1-100 chars), `job_role`, `job_description` (optional) | `analysis` (`overview`, `recent_news`, `culture`, `likely_questions`, `questions_to_ask`, `tips`), `sources` (`title`, `url`) |
+| POST | `/roadmap` | JSON: `job_role`, `level` (`beginner` / `some experience` / `experienced`), `hours_per_week` (2-40), `weeks` (4, 8 or 12), `gaps` (optional list), `context` (optional, max 5000 chars) | `roadmap` (`summary`, `weeks`, `portfolio_project`, `resources`), `total_hours`, `warnings` |
 
 Try every endpoint at **http://localhost:8000/docs**.
 
@@ -152,8 +167,21 @@ collect (no duplicates, max 8) and show as sources.
 *structures* those notes with `responses.parse`. Each prompt does one job, and the prep sheet
 can only use what was actually found.
 
+**Check the AI's work in code** – the roadmap prompt says "max N hours per week", but an AI can
+still break its own rules. So Python adds up the hours of every week and counts the weeks, and
+returns `warnings` instead of trusting the plan blindly. Resources have **no URLs** on purpose:
+an AI without web search often invents links that look real but do not exist.
+
+**Lifting state up** – in React, data flows *down* from parent to child as props. Two sibling
+screens (e.g. `CVReviewer` and `RoadmapBuilder`) cannot share state directly. So the state lives
+in their common parent, `App.jsx`: it keeps `roadmapSeed` and passes a function `buildPlan` *down*
+to the result screens. When you click "Build my learning plan", the child calls `buildPlan(...)`,
+which sends the data *up* to `App`. `App` then passes `roadmapSeed` *down* to `RoadmapBuilder`,
+whose `useEffect` fills in the form.
+
 **Input validation with Pydantic** – `Field(min_length=1, max_length=100)` rejects an empty or
-too-long company name before any (paid) AI call happens.
+too-long company name before any (paid) AI call happens. `Field(ge=2, le=40)` does the same for
+numbers ("greater or equal 2, less or equal 40"), and `Literal[4, 8, 12]` allows only those values.
 
 **Routers** – `APIRouter` lets each feature live in its own file; `main.py` just plugs them in.
 
@@ -251,5 +279,6 @@ In the **backend** project, add `ALLOWED_ORIGINS` = your frontend URL
 - [x] Feature 3: one app with tabs
 - [x] Bonus: Job-fit score
 - [x] Bonus: Company prep with web search
+- [x] Bonus: Learning roadmap (connected to the other features)
 - [ ] Deploy to Vercel
-- [ ] More bonus features (job search, learning roadmap, LLM-as-a-judge)
+- [ ] More bonus features (job search, LLM-as-a-judge)

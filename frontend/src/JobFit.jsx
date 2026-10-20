@@ -7,7 +7,8 @@ import CVInput, { EMPTY_CV, addCVToForm, checkCV } from "./CVInput";
 const STATUS_ORDER = { missing: 0, partial: 1, met: 2 };
 const STATUS_LABEL = { missing: "Missing", partial: "Partly", met: "Met" };
 
-export default function JobFit() {
+// onBuildPlan comes from App.jsx (see "lifting state up" there)
+export default function JobFit({ onBuildPlan }) {
   // Inputs
   const [jobDescription, setJobDescription] = useState("");
   const [jobRole, setJobRole] = useState("");
@@ -100,7 +101,20 @@ export default function JobFit() {
           and "missing" none.
         </p>
 
-        <button className="btn btn-primary" onClick={() => setResult(null)}>Check another job</button>
+        <div className="actions">
+          <button
+            className="btn btn-highlight"
+            onClick={() => onBuildPlan({
+              job_role: jobRole,
+              // Only the requirements you do not fully meet yet
+              gaps: reqs.filter((r) => r.status !== "met").map((r) => r.requirement),
+              context: `Job-fit result (${match_percent}%, ${verdict}): ${analysis.summary}`,
+            })}
+          >
+            Build my learning plan
+          </button>
+          <button className="btn btn-primary" onClick={() => setResult(null)}>Check another job</button>
+        </div>
       </div>
     );
   }

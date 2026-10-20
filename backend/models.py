@@ -143,3 +143,55 @@ class CompanyPrepResult(BaseModel):
     """What the backend returns to React: the prep sheet + the web pages it is based on"""
     analysis: CompanyPrepAnalysis
     sources: list[Source]
+
+
+# ======================= Bonus: Learning roadmap =======================
+
+class RoadmapRequest(BaseModel):
+    """What React sends to /roadmap (JSON)"""
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    job_role: str = Field(min_length=1, max_length=100)
+    level: Literal["beginner", "some experience", "experienced"]
+    hours_per_week: int = Field(ge=2, le=40)     # ge = "greater or equal", le = "less or equal"
+    weeks: Literal[4, 8, 12]
+    gaps: list[str] = []                          # optional: skills to learn
+    context: str = Field("", max_length=5000)     # optional: e.g. CV review summary
+
+
+class RoadmapTask(BaseModel):
+    title: str
+    type: Literal["learn", "build", "practise"]
+    hours: int
+
+
+class RoadmapWeek(BaseModel):
+    week_number: int
+    focus: str                    # the theme of the week
+    tasks: list[RoadmapTask]
+    milestone: str                # what you can do/show at the end of the week
+
+
+class PortfolioProject(BaseModel):
+    title: str
+    description: str
+
+
+class Resource(BaseModel):
+    name: str                     # e.g. "Official Python tutorial" (no URL on purpose)
+    why: str
+
+
+class Roadmap(BaseModel):
+    """What the AI must return"""
+    summary: str
+    weeks: list[RoadmapWeek]
+    portfolio_project: PortfolioProject
+    resources: list[Resource]
+
+
+class RoadmapResult(BaseModel):
+    """What the backend returns to React: the plan + our own checks"""
+    roadmap: Roadmap
+    total_hours: int              # calculated in Python
+    warnings: list[str]           # problems Python found in the AI's plan

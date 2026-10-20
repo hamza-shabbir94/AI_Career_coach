@@ -17,7 +17,8 @@ function Meter({ title, data }) {
   );
 }
 
-export default function CVReviewer() {
+// onBuildPlan comes from App.jsx (see "lifting state up" there)
+export default function CVReviewer({ onBuildPlan }) {
   // Inputs
   const [jobRole, setJobRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -112,7 +113,19 @@ export default function CVReviewer() {
           )}
         </div>
 
-        <button className="btn btn-primary" onClick={() => setReview(null)}>Review another CV</button>
+        <div className="actions">
+          <button
+            className="btn btn-highlight"
+            onClick={() => onBuildPlan({
+              job_role: jobRole,
+              gaps: [...review.missing_skills, ...review.improvements],
+              context: `CV review summary: ${review.summary}`,
+            })}
+          >
+            Build my learning plan
+          </button>
+          <button className="btn btn-primary" onClick={() => setReview(null)}>Review another CV</button>
+        </div>
       </div>
     );
   }
