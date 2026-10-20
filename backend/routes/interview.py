@@ -19,12 +19,13 @@ def next_question(req: NextRequest):
     finished = req.answers_given >= MAX_QUESTIONS
     question_number = min(req.answers_given + 1, MAX_QUESTIONS)
 
-    # Build a SMALL input: summary + last Q&A (not the whole chat)
+    # Build a SMALL input: summary + last Q&A (not the whole chat).
+    # Each part is wrapped in tags, so the AI treats it as data (see DATA_RULE).
     if req.last_answer:
         input_text = (
-            f"Interview notes so far:\n{req.summary or '(no notes yet)'}\n\n"
-            f"Last question: {req.last_question}\n"
-            f"Candidate's answer: {req.last_answer}"
+            f"Interview notes so far:\n<notes>\n{req.summary or '(no notes yet)'}\n</notes>\n\n"
+            f"Last question:\n<question>\n{req.last_question}\n</question>\n\n"
+            f"Candidate's answer:\n<answer>\n{req.last_answer}\n</answer>"
         )
     else:
         input_text = "The candidate is ready. Start the interview."
@@ -52,7 +53,7 @@ def interview_feedback(req: FeedbackRequest):
     response = client.responses.parse(
         model=MODEL,
         instructions=interview_feedback_prompt(req.job_role),
-        input=f"Interview notes:\n{req.summary}",
+        input=f"Interview notes:\n<notes>\n{req.summary}\n</notes>",
         text_format=Feedback,
     )
     return response.output_parsed

@@ -1,10 +1,11 @@
-// A round score gauge, used by both features.
-// Colour changes with the score: red (low), amber (ok), green (good).
+// A round score gauge, used by all features.
+// max=10 shows "7/10", max=100 shows "72%".
+// Colour depends on the percentage: red (<50%), amber (<70%), green (70%+).
 export default function ScoreRing({ score, max = 10, label }) {
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
-  const percent = Math.max(0, Math.min(score / max, 1));
-  const level = score < 5 ? "low" : score < 7 ? "mid" : "high";
+  const percent = Math.max(0, Math.min(score / max, 1)); // 0 to 1
+  const level = percent < 0.5 ? "low" : percent < 0.7 ? "mid" : "high";
 
   return (
     <div className={`ring ${level}`}>
@@ -22,7 +23,7 @@ export default function ScoreRing({ score, max = 10, label }) {
       </svg>
       <div className="ring-text">
         <strong>{score}</strong>
-        <span>/{max}</span>
+        <span>{max === 100 ? "%" : `/${max}`}</span>
       </div>
       {label && <p className="ring-label">{label}</p>}
     </div>

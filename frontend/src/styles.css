@@ -19,6 +19,8 @@
   --pen-soft: #fde8e8;
   --mint: #18875b;        /* good / done */
   --mint-soft: #ddf3e9;
+  --amber: #e0a800;       /* "partly" / middle scores */
+  --amber-soft: #fff4d6;
 
   --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body: "Public Sans", system-ui, -apple-system, sans-serif;
@@ -155,7 +157,7 @@ button { font: inherit; cursor: pointer; }
 
 /* ---------- Workspace (tabs + app) ---------- */
 .workspace { max-width: 880px; margin: 72px auto 0; padding: 0 24px; scroll-margin-top: 24px; }
-.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
 .tab {
   text-align: left; padding: 16px 20px; border-radius: var(--radius);
   border: 2px solid var(--line); background: transparent; color: var(--ink);
@@ -310,6 +312,39 @@ li + li { margin-top: 6px; }
 
 .error { color: var(--pen); font-weight: 600; background: var(--pen-soft); padding: 12px 16px; border-radius: var(--radius-sm); }
 
+/* ---------- Job fit ---------- */
+.reqs { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.reqs li + li { margin-top: 0; }
+.req { padding: 14px 18px; border-radius: var(--radius-sm); background: var(--desk); border-left: 5px solid var(--line); }
+.req.missing { border-left-color: var(--pen); }
+.req.partial { border-left-color: var(--amber); }
+.req.met { border-left-color: var(--mint); }
+.req-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.req-tags { display: flex; gap: 6px; }
+.req-evidence { margin-top: 6px; color: var(--ink-soft); font-size: 0.93rem; }
+.req-fix { margin-top: 6px; font-size: 0.93rem; font-weight: 600; }
+.req-fix::before { content: "→ "; }
+.badge { background: var(--ink); color: #fff; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; }
+.status { border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; }
+.status.missing { background: var(--pen-soft); color: var(--pen); }
+.status.partial { background: var(--amber-soft); color: #8a6700; }
+.status.met { background: var(--mint-soft); color: var(--mint); }
+
+/* Small explanation box (score maths, loading time) */
+.hint { background: var(--highlight-soft); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 0.92rem; color: var(--ink-soft); }
+
+/* ---------- Company prep ---------- */
+.result-title { font-size: 1.75rem; margin-bottom: 8px; }
+.note-plain { background: var(--desk); }
+.qa-list { display: flex; flex-direction: column; gap: 10px; }
+.qa { border: 2px solid var(--line); border-radius: var(--radius); padding: 14px 18px; transition: border-color 0.15s; }
+.qa[open], .qa:hover { border-color: var(--ink); }
+.qa summary { cursor: pointer; font-weight: 700; }
+.qa p { margin-top: 10px; font-size: 0.95rem; color: var(--ink-soft); }
+.sources { font-size: 0.92rem; }
+.sources a { color: var(--ink-soft); text-underline-offset: 3px; word-break: break-word; }
+.sources a:hover { color: var(--ink); }
+
 /* ---------- Footer ---------- */
 .footer { max-width: 880px; margin: 64px auto 0; padding: 32px 24px 48px; text-align: center; color: var(--muted); font-size: 0.9rem; }
 .footer p + p { margin-top: 4px; }
@@ -322,6 +357,8 @@ li + li { margin-top: 6px; }
   .steps-list { grid-template-columns: 1fr; }
   .steps-list li + li { border-left: none; border-top: 1px solid var(--line); }
   .meters, .split { grid-template-columns: 1fr; }
+  .tabs { grid-template-columns: 1fr 1fr; } /* 4 tabs -> 2x2 */
+  .nav-links button { padding: 8px; font-size: 0.9rem; }
 }
 @media (max-width: 560px) {
   .nav-links { display: none; }

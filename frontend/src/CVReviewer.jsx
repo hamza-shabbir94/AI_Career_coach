@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { postForm } from "./api";
 import ScoreRing from "./ScoreRing";
-
-const MAX_FILE_MB = 4;
-const ALLOWED = [".pdf", ".docx", ".txt", ".md"];
+import CVInput, { EMPTY_CV, addCVToForm, checkCV } from "./CVInput";
 
 // One row: name + bar + score + comments
 function Meter({ title, data }) {
@@ -23,46 +21,23 @@ export default function CVReviewer() {
   // Inputs
   const [jobRole, setJobRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [inputMode, setInputMode] = useState("upload"); // "upload" or "paste"
-  const [file, setFile] = useState(null);
-  const [cvText, setCvText] = useState("");
-  const [dragging, setDragging] = useState(false);
+  const [cv, setCv] = useState(EMPTY_CV); // { mode, file, text }, see CVInput.jsx
 
   // Result + UI state
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Check a file before we accept it (used by click AND drag & drop)
-  function acceptFile(chosen) {
-    setError("");
-    if (!chosen) return;
-    if (!ALLOWED.some((ext) => chosen.name.toLowerCase().endsWith(ext))) {
-      return setError("Use a PDF, Word (.docx) or text file.");
-    }
-    if (chosen.size > MAX_FILE_MB * 1024 * 1024) {
-      return setError(`This file is over ${MAX_FILE_MB} MB. Upload a smaller file or paste the text.`);
-    }
-    setFile(chosen);
-  }
-
-  function onDrop(e) {
-    e.preventDefault();
-    setDragging(false);
-    acceptFile(e.dataTransfer.files[0]);
-  }
-
   async function reviewCV() {
     if (!jobRole.trim()) return setError("Enter the role you are applying for.");
-    if (inputMode === "upload" && !file) return setError("Choose a CV file first.");
-    if (inputMode === "paste" && !cvText.trim()) return setError("Paste your CV text first.");
+    const cvError = checkCV(cv);
+    if (cvError) return setError(cvError);
 
     // FormData = a form that can carry files (the backend reads it with Form/File)
     const form = new FormData();
     form.append("job_role", jobRole);
     form.append("job_description", jobDescription);
-    if (inputMode === "upload") form.append("file", file);
-    else form.append("cv_text", cvText);
+    addCVToForm(form, cv);
 
     setLoading(true);
     setError("");
@@ -171,44 +146,7 @@ export default function CVReviewer() {
         />
       </div>
 
-      <div className="field">
-        <div className="field-row">
-          <span className="label">Your CV</span>
-          <div className="switch" role="group" aria-label="How to add your CV">
-            <button className={inputMode === "upload" ? "on" : ""} onClick={() => setInputMode("upload")}>Upload</button>
-            <button className={inputMode === "paste" ? "on" : ""} onClick={() => setInputMode("paste")}>Paste text</button>
-          </div>
-        </div>
-
-        {inputMode === "upload" ? (
-          <label
-            className={`drop ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
-            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={onDrop}
-          >
-            <input type="file" accept={ALLOWED.join(",")} onChange={(e) => acceptFile(e.target.files[0])} />
-            {file ? (
-              <>
-                <strong>{file.name}</strong>
-                <span>{(file.size / 1024).toFixed(0)} KB. Click to choose another file.</span>
-              </>
-            ) : (
-              <>
-                <strong>Drop your CV here or click to choose</strong>
-                <span>PDF, Word or text, up to {MAX_FILE_MB} MB</span>
-              </>
-            )}
-          </label>
-        ) : (
-          <textarea
-            rows={10}
-            value={cvText}
-            onChange={(e) => setCvText(e.target.value)}
-            placeholder="Paste the full text of your CV"
-          />
-        )}
-      </div>
+      <CVInput value={cv} onChange={setCv} />
 
       <button className="btn btn-primary btn-lg" onClick={reviewCV} disabled={loading}>
         {loading ? "Reviewing your CV…" : "Review my CV"}
