@@ -18,11 +18,12 @@ const TABS = [
   { id: "roadmap", label: "Learning plan", hint: "Week-by-week, fits your time" },
 ];
 
-// "How it works" really is a sequence, so the steps are numbered
+// "How it works" = your job hunt, in order. Each step opens its tab.
 const STEPS = [
-  { title: "Name the role", text: "Type the job you want. Paste the job ad for sharper questions and feedback." },
-  { title: "Answer or upload", text: "Answer 5 interview questions, or upload your CV as PDF, Word or text." },
-  { title: "Get clear fixes", text: "See your score, what worked, what didn't, and exactly what to change." },
+  { title: "Find a job", text: "Search job boards for current ads that fit your role, place and level.", tab: "jobs" },
+  { title: "Check your fit", text: "Compare your CV with a job ad, or get a full CV review.", tab: "fit" },
+  { title: "Prepare and practise", text: "Research the company, then answer 5 interview questions for it.", tab: "company" },
+  { title: "Close the gaps", text: "Get a week-by-week learning plan that fits your time.", tab: "roadmap" },
 ];
 
 export default function App() {
@@ -85,15 +86,26 @@ export default function App() {
           <ol className="steps-list">
             {STEPS.map((s, i) => (
               <li key={s.title}>
-                <span className="step-num">{i + 1}</span>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
+                {/* A link (not a button), because it contains a heading and a paragraph */}
+                <a
+                  className="step"
+                  href="#workspace"
+                  onClick={(e) => {
+                    e.preventDefault(); // we scroll ourselves in openTab()
+                    openTab(s.tab);
+                  }}
+                >
+                  <span className="step-num">{i + 1}</span>
+                  <h3><span className="step-title">{s.title}</span></h3>
+                  <p>{s.text}</p>
+                  <span className="step-open" aria-hidden="true">Open →</span>
+                </a>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className="workspace" ref={workspaceRef}>
+        <section className="workspace" id="workspace" ref={workspaceRef}>
           <div className="tabs" role="tablist">
             {TABS.map((t) => (
               <button

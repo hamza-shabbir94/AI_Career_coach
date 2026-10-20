@@ -141,6 +141,19 @@ The look comes from the tools of editing a CV: **navy ink** `#14213d`, a **yello
 (headings) and **Public Sans** (text). To change colours or fonts, edit the variables at the top
 of `styles.css`, and every screen updates.
 
+**The hero demo** (right side of the top of the page) loops through 5 short scenes, one per
+feature: mock interview, job search, job fit, company prep and learning plan. Each scene stays
+7 seconds and uses the same "CV editing" animations (rise in, red pen, highlighter, stamp).
+Hover the card to pause it, click the dots to jump to a scene, click the card to open that
+feature. How it works: `Hero.jsx` keeps the current scene in state and a timer moves it on;
+the scene's `key` changes, so React rebuilds it and the CSS animations play again.
+In CSS, every new animation only describes where it starts (`from`): the normal style is the
+final look, so people who turn off animations simply see the finished scene, and the card stops
+auto-playing for them.
+
+**How it works** (the 4 steps under the hero) follows a real job hunt: find a job → check your
+fit → prepare and practise → close the gaps. Each step is a link that opens its tab.
+
 ---
 
 ## API endpoints
