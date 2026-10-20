@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import CharCount from "./CharCount";
 import { postForm } from "./api";
 import ScoreRing from "./ScoreRing";
 import CVInput, { EMPTY_CV, addCVToForm, checkCV } from "./CVInput";
@@ -232,6 +233,7 @@ export default function JobFit({ onBuildPlan, seed }) {
           onChange={(e) => { setJobDescription(e.target.value); setFromSearch(false); }}
           placeholder="Paste the full job ad, including the requirements"
         />
+        <CharCount value={jobDescription} max={20000} min={50} />
         {fromSearch && (
           <p className="legend">
             This is a short summary from Job search. For a more exact score, paste the full job ad from its link.

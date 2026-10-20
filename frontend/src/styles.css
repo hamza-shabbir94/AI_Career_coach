@@ -56,6 +56,9 @@ button { font: inherit; cursor: pointer; }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-lg { padding: 14px 28px; font-size: 1.05rem; align-self: flex-start; }
+/* Big main buttons get an arrow that slides right on hover (not while loading) */
+.btn-primary.btn-lg:not(:disabled)::after { content: "→"; display: inline-block; margin-left: 8px; transition: transform 0.15s; }
+.btn-primary.btn-lg:hover:not(:disabled)::after { transform: translateX(4px); }
 .btn-primary { background: var(--ink); color: #fff; }
 .btn-primary:hover:not(:disabled) { background: var(--ink-soft); }
 .btn-highlight { background: var(--highlight); color: var(--ink); }
@@ -259,7 +262,13 @@ button { font: inherit; cursor: pointer; }
 .steps-list li { margin: 0; }
 .steps-list li + li { margin-top: 0; }
 /* Each step is a link that opens its tab */
-.step { display: block; height: 100%; padding: 28px 24px; color: inherit; text-decoration: none; transition: background 0.15s; }
+.step { position: relative; display: block; height: 100%; padding: 24px; color: inherit; text-decoration: none; transition: background 0.15s; }
+/* Dashed "route" from each number to the next step (desktop only) */
+.steps-list li:not(:last-child) .step::before {
+  content: ""; position: absolute; top: 41px; left: 70px; right: -12px;
+  border-top: 2px dashed var(--line);
+}
+.step:hover .step-num, .step:focus-visible .step-num { background: var(--highlight); color: var(--ink); }
 .step:hover, .step:focus-visible { background: var(--desk); }
 .step-title {
   background-image: linear-gradient(var(--highlight-soft), var(--highlight-soft));
@@ -267,12 +276,13 @@ button { font: inherit; cursor: pointer; }
   transition: background-size 0.3s ease-out;
 }
 .step:hover .step-title, .step:focus-visible .step-title { background-size: 100% 0.45em; }
-.step-open { display: inline-block; margin-top: 12px; font-weight: 700; font-size: 0.9rem; opacity: 0; transform: translateX(-6px); transition: opacity 0.15s, transform 0.15s; }
+.step-open { display: inline-block; margin-left: 6px; opacity: 0; transform: translateX(-6px); transition: opacity 0.15s, transform 0.15s; }
 .step:hover .step-open, .step:focus-visible .step-open { opacity: 1; transform: none; }
 .steps-list li + li { border-left: 1px solid var(--line); }
 .step-num {
-  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
   background: var(--ink); color: #fff; font-family: var(--display); font-weight: 700; margin-bottom: 14px;
+  transition: background 0.15s, color 0.15s;
 }
 .steps-list h3 { font-size: 1.2rem; margin-bottom: 6px; }
 .steps-list p { color: var(--muted); font-size: 0.97rem; }
@@ -280,18 +290,46 @@ button { font: inherit; cursor: pointer; }
 /* ---------- Workspace (tabs + app) ---------- */
 .workspace { max-width: 880px; margin: 72px auto 0; padding: 0 24px; scroll-margin-top: 24px; }
 .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; } /* 6 tabs: 3 x 2 */
+.workspace-head { margin-bottom: 18px; }
+.workspace-head h2 { font-size: 1.7rem; letter-spacing: -0.01em; }
+.workspace-head p { color: var(--muted); margin-top: 4px; }
+
 .tab {
-  text-align: left; padding: 16px 20px; border-radius: var(--radius);
-  border: 2px solid var(--line); background: transparent; color: var(--ink);
-  display: flex; flex-direction: column; gap: 2px; transition: border-color 0.15s, background 0.15s;
+  text-align: left; padding: 14px 16px; border-radius: var(--radius);
+  border: 2px solid var(--line); background: var(--paper); color: var(--ink);
+  display: flex; align-items: center; gap: 14px;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.tab strong { font-family: var(--display); font-size: 1.2rem; }
-.tab span { color: var(--muted); font-size: 0.9rem; }
-.tab:hover { border-color: var(--ink); }
-.tab.active { background: var(--ink); border-color: var(--ink); color: #fff; }
-.tab.active span { color: rgba(255, 255, 255, 0.7); }
+.tab-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tab strong { font-family: var(--display); font-size: 1.12rem; }
+.tab-step { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.tab-hint { color: var(--muted); font-size: 0.86rem; }
+.tab:hover { border-color: var(--ink); transform: translateY(-2px); box-shadow: 0 10px 20px -14px rgba(20, 33, 61, 0.5); }
+.tab:hover .icon-tile { animation: wiggle 0.4s; }
+/* Active tab: navy, with a yellow bar along the bottom */
+.tab.active { background: var(--ink); border-color: var(--ink); color: #fff; box-shadow: inset 0 -4px 0 var(--highlight); transform: none; }
+.tab.active .tab-step, .tab.active .tab-hint { color: rgba(255, 255, 255, 0.7); }
+.tab.active .icon-tile { background: var(--highlight); color: var(--ink); }
+@keyframes wiggle { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+
+/* Coloured square behind each feature icon */
+.icon-tile { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; flex: none; transition: background 0.15s; }
+.icon-tile.yellow { background: var(--highlight-soft); color: #8a6700; }
+.icon-tile.mint { background: var(--mint-soft); color: var(--mint); }
+.icon-tile.navy { background: var(--ink); color: #fff; }
+.icon-tile.red { background: var(--pen-soft); color: var(--pen); }
 
 .sheet { background: var(--paper); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+/* Header strip on the sheet: which tool, which step of the job hunt */
+.sheet-head {
+  display: flex; align-items: center; gap: 14px; padding: 16px 36px;
+  border-bottom: 1px solid var(--line); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, var(--highlight-soft), var(--paper) 75%);
+}
+.sheet-head strong { display: block; font-family: var(--display); font-size: 1.02rem; }
+.sheet-head span:not(.icon-tile) { color: var(--muted); font-size: 0.9rem; }
+/* Same solid yellow tile as the active tab, so the header clearly belongs to it */
+.sheet-head .icon-tile { background: var(--highlight); color: var(--ink); }
 .pane { padding: 36px; display: flex; flex-direction: column; gap: 24px; }
 .pane > .btn { align-self: flex-start; }
 .pane-head h2 { font-size: 1.75rem; letter-spacing: -0.01em; }
@@ -305,9 +343,16 @@ label, .label { font-weight: 700; font-size: 0.95rem; }
 input, textarea {
   font: inherit; color: var(--ink); width: 100%;
   padding: 13px 15px; border: 2px solid var(--line); border-radius: var(--radius-sm);
-  background: var(--paper); resize: vertical; transition: border-color 0.15s;
+  background: var(--desk); resize: vertical; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
-input:focus, textarea:focus { outline: none; border-color: var(--ink); }
+input:hover, textarea:hover { border-color: #c6cfdf; }
+/* Click in: the field turns white with a yellow highlighter glow */
+input:focus:not([type="checkbox"]), textarea:focus {
+  outline: none; border-color: var(--ink); background: var(--paper);
+  box-shadow: 0 0 0 4px var(--highlight-soft);
+}
+.char-count { align-self: flex-end; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+.char-count.short { color: var(--pen); }
 input::placeholder, textarea::placeholder { color: #98a2b8; }
 
 .quick { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -647,6 +692,7 @@ a.btn { display: inline-block; text-decoration: none; }
   .steps-list li:nth-child(even) { border-left: 1px solid var(--line); }
   .steps-list li:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .step-open { opacity: 1; transform: none; } /* no hover on phones, so always show it */
+  .steps-list li:not(:last-child) .step::before { display: none; } /* no route line when stacked */
   .demo-stage { min-height: 0; }
   .meters, .split, .quality-list { grid-template-columns: 1fr; }
   .tabs { grid-template-columns: 1fr 1fr; } /* 6 tabs: 2 x 3 */
@@ -665,8 +711,11 @@ a.btn { display: inline-block; text-decoration: none; }
   .demo-job { grid-template-columns: 1fr auto; }
   .demo-badge { display: none; }
   .tabs { grid-template-columns: 1fr 1fr; }
-  .tab { padding: 12px 14px; }
-  .tab span { display: none; }
+  .tab { padding: 12px; gap: 10px; }
+  .tab-hint, .tab-step { display: none; }
+  .tab strong { font-size: 1rem; }
+  .icon-tile { width: 36px; height: 36px; border-radius: 10px; }
+  .sheet-head { padding: 14px 22px; }
   .result-top { grid-template-columns: 1fr; justify-items: start; }
   .errors li { grid-template-columns: 1fr; gap: 4px; }
   .bubble { max-width: 88%; }

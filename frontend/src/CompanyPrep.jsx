@@ -1,8 +1,10 @@
 import { useState } from "react";
+import CharCount from "./CharCount";
 import { postJson } from "./api";
 import LoadingSteps from "./LoadingSteps";
 
 const MAX_NOTES_CHARS = 6000; // same limit as the backend (company_notes in models.py)
+const EXAMPLE_COMPANIES = ["Spotify", "Zalando", "SAP", "N26"]; // quick picks under the input
 const LOADING_STEPS = ["Searching the web", "Reading news and reviews", "Writing your prep sheet"];
 
 // Turn the prep sheet into short plain-text notes for the mock interviewer
@@ -193,6 +195,11 @@ export default function CompanyPrep({ onPractise }) {
           onChange={(e) => setCompany(e.target.value)}
           placeholder="e.g. Spotify"
         />
+        <div className="quick">
+          {EXAMPLE_COMPANIES.map((c) => (
+            <button key={c} className="quick-pick" onClick={() => setCompany(c)}>{c}</button>
+          ))}
+        </div>
       </div>
 
       <div className="field">
@@ -215,6 +222,7 @@ export default function CompanyPrep({ onPractise }) {
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the job ad for more focused questions"
         />
+        <CharCount value={jobDescription} max={20000} />
       </div>
 
       {!loading && <p className="hint">Web research takes 20-40 seconds. Keep this tab open.</p>}

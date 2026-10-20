@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import CharCount from "./CharCount";
 import { postJson } from "./api";
 import ScoreRing from "./ScoreRing";
 
@@ -184,6 +185,7 @@ export default function InterviewMode({ onBuildPlan, seed }) {
             onChange={(e) => setJobDescription(e.target.value)}
             placeholder="Paste the job ad to get questions about its exact requirements"
           />
+          <CharCount value={jobDescription} />
         </div>
 
         <button className="btn btn-primary btn-lg" onClick={startInterview}>Start interview</button>

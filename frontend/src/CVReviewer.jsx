@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CharCount from "./CharCount";
 import { postForm } from "./api";
 import ScoreRing from "./ScoreRing";
 import CVInput, { EMPTY_CV, addCVToForm, checkCV } from "./CVInput";
@@ -256,6 +257,7 @@ export default function CVReviewer({ onBuildPlan }) {
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the job ad to check your CV against its requirements"
         />
+        <CharCount value={jobDescription} />
       </div>
 
       <CVInput value={cv} onChange={setCv} />

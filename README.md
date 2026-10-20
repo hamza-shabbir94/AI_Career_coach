@@ -111,6 +111,8 @@ career-coach/
         ├── main.jsx          ← starts React
         ├── App.jsx           ← page layout: nav, hero, steps, tabs, footer
         ├── Hero.jsx          ← big headline + animated demo
+        ├── Icons.jsx         ← 6 small SVG icons for the tool tabs
+        ├── CharCount.jsx     ← character counter under the job-ad boxes
         ├── ScoreRing.jsx     ← round score gauge (/10, % or /5), fills up from 0
         ├── LoadingSteps.jsx  ← progress steps while web search runs
         ├── storage.js        ← save/load small data in the browser (localStorage)
@@ -152,7 +154,14 @@ final look, so people who turn off animations simply see the finished scene, and
 auto-playing for them.
 
 **How it works** (the 4 steps under the hero) follows a real job hunt: find a job → check your
-fit → prepare and practise → close the gaps. Each step is a link that opens its tab.
+fit → prepare and practise → close the gaps. Each step is a link that opens its tab, and a dashed
+"route" line connects the numbers.
+
+**Your career toolkit** (the tabs) lists the 6 tools in the same journey order, each with a small
+icon (`Icons.jsx`, plain SVG) in a coloured tile and its step number. The active tab is navy with a
+yellow bar; the sheet below gets a header strip with the same icon and "Step X of 4". Fields are
+soft grey and turn white with a yellow glow when you type; job-ad boxes show a character counter
+(`CharCount.jsx`).
 
 ---
 

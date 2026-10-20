@@ -25,6 +25,7 @@ const FILTERS = [
   { id: "hybrid", label: "Hybrid" },
   { id: "on-site", label: "On-site" },
 ];
+const EXAMPLE_ROLES = ["Junior AI Engineer", "Data Analyst", "Backend Developer"]; // quick picks
 const LOADING_STEPS = ["Searching job boards", "Reading job ads", "Checking links"];
 const SAVED_KEY = "career-coach:saved-jobs"; // where saved jobs live in localStorage
 
@@ -296,6 +297,11 @@ export default function JobSearch({ onCheckFit }) {
             onChange={(e) => setJobRole(e.target.value)}
             placeholder="e.g. Junior AI Engineer"
           />
+          <div className="quick">
+            {EXAMPLE_ROLES.map((r) => (
+              <button key={r} className="quick-pick" onClick={() => setJobRole(r)}>{r}</button>
+            ))}
+          </div>
         </div>
         <div className="field">
           <label htmlFor="js-location">Location <span className="optional">optional</span></label>
