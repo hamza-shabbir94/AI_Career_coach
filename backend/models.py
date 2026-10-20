@@ -234,3 +234,47 @@ class RoadmapResult(BaseModel):
     roadmap: Roadmap
     total_hours: int              # calculated in Python
     warnings: list[str]           # problems Python found in the AI's plan
+
+
+# ======================= Bonus: Job search (web search) =======================
+
+class JobSearchRequest(BaseModel):
+    """What React sends to /jobs/search (JSON)"""
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    job_role: str = Field(min_length=1, max_length=100)
+    location: str = Field("", max_length=100)    # e.g. "Berlin" or "Germany"; empty = anywhere
+    work_type: Literal["any", "remote", "hybrid", "on-site"] = "any"
+    level: Literal["any", "entry", "junior", "mid", "senior"] = "any"
+    about_me: str = Field("", max_length=3000)   # optional: skills, to rank the jobs
+
+
+class JobPosting(BaseModel):
+    """One job, as the AI returns it"""
+    title: str
+    company: str
+    location: str
+    work_type: str                # "remote", "hybrid", "on-site" or "unknown"
+    url: str                      # link to the job ad (checked in Python!)
+    posted: str                   # e.g. "3 days ago", or "unknown"
+    summary: str                  # 2-3 sentences: what the job is
+    key_requirements: list[str]
+    why_relevant: str             # why it fits the search / the candidate
+
+
+class JobSearchAnalysis(BaseModel):
+    """What the AI must return (call 2)"""
+    jobs: list[JobPosting]
+    search_tips: list[str]        # where/how to search for more
+
+
+class JobListing(JobPosting):
+    """A job + our own check: was its link really found by the web search?"""
+    verified: bool
+
+
+class JobSearchResult(BaseModel):
+    """What the backend returns to React"""
+    jobs: list[JobListing]
+    search_tips: list[str]
+    sources: list[Source]         # every page the web search cited

@@ -5,10 +5,12 @@ import CVReviewer from "./CVReviewer";
 import JobFit from "./JobFit";
 import CompanyPrep from "./CompanyPrep";
 import RoadmapBuilder from "./RoadmapBuilder";
+import JobSearch from "./JobSearch";
 import "./styles.css";
 
-// The five features, shown as tabs. The nav uses this list too.
+// The six features, shown as tabs (3x2, or 2x3 on mobile). The nav uses this list too.
 const TABS = [
+  { id: "jobs", label: "Job search", hint: "Current job ads from the web" },
   { id: "interview", label: "Mock interview", hint: "5 questions, then a score" },
   { id: "cv", label: "CV review", hint: "Upload or paste your CV" },
   { id: "fit", label: "Job fit", hint: "Your match % for a job ad" },
@@ -33,6 +35,8 @@ export default function App() {
   const [roadmapSeed, setRoadmapSeed] = useState(null);
   // interviewSeed = { job_role, company, company_notes, job_description } from Company prep.
   const [interviewSeed, setInterviewSeed] = useState(null);
+  // jobFitSeed = { job_role, job_description } from Job search ("Check my fit").
+  const [jobFitSeed, setJobFitSeed] = useState(null);
 
   // Used by the hero buttons and the nav: pick a tab and scroll to the app
   function openTab(id) {
@@ -50,6 +54,12 @@ export default function App() {
   function practiseInterview(seed) {
     setInterviewSeed(seed);
     openTab("interview");
+  }
+
+  // Job search calls this to check a job against your CV in the Job fit tab
+  function checkFit(seed) {
+    setJobFitSeed(seed);
+    openTab("fit");
   }
 
   return (
@@ -101,9 +111,10 @@ export default function App() {
 
           {/* All stay mounted, so switching tabs does not lose your progress */}
           <div className="sheet">
+            <div hidden={tab !== "jobs"}><JobSearch onCheckFit={checkFit} /></div>
             <div hidden={tab !== "interview"}><InterviewMode onBuildPlan={buildPlan} seed={interviewSeed} /></div>
             <div hidden={tab !== "cv"}><CVReviewer onBuildPlan={buildPlan} /></div>
-            <div hidden={tab !== "fit"}><JobFit onBuildPlan={buildPlan} /></div>
+            <div hidden={tab !== "fit"}><JobFit onBuildPlan={buildPlan} seed={jobFitSeed} /></div>
             <div hidden={tab !== "company"}><CompanyPrep onPractise={practiseInterview} /></div>
             <div hidden={tab !== "roadmap"}><RoadmapBuilder seed={roadmapSeed} /></div>
           </div>

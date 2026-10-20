@@ -157,7 +157,7 @@ button { font: inherit; cursor: pointer; }
 
 /* ---------- Workspace (tabs + app) ---------- */
 .workspace { max-width: 880px; margin: 72px auto 0; padding: 0 24px; scroll-margin-top: 24px; }
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; } /* 5 tabs: 3 + 2 */
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; } /* 6 tabs: 3 x 2 */
 .tab {
   text-align: left; padding: 16px 20px; border-radius: var(--radius);
   border: 2px solid var(--line); background: transparent; color: var(--ink);
@@ -406,6 +406,20 @@ li + li { margin-top: 6px; }
 .quality-why { font-size: 0.93rem; color: var(--ink-soft); }
 .quality-issues { margin-top: 10px; font-size: 0.9rem; color: var(--pen); }
 
+/* ---------- Job search ---------- */
+.switch-wrap { flex-wrap: wrap; border-radius: 18px; } /* many options: may wrap on phones */
+.job-list { display: flex; flex-direction: column; gap: 14px; }
+.job { border: 2px solid var(--line); border-radius: var(--radius); padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+.job:hover { border-color: var(--ink); }
+.job-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.job-head h3 { margin: 0; }
+.job-head .status { flex: none; }
+.job-company { font-weight: 700; color: var(--ink-soft); margin-top: 2px; }
+.job-meta { color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+.job-why { font-size: 0.93rem; color: var(--mint); font-weight: 600; }
+.job .actions { align-items: center; margin-top: 4px; }
+a.btn { display: inline-block; text-decoration: none; }
+
 /* ---------- Footer ---------- */
 .footer { max-width: 880px; margin: 64px auto 0; padding: 32px 24px 48px; text-align: center; color: var(--muted); font-size: 0.9rem; }
 .footer p + p { margin-top: 4px; }
@@ -418,7 +432,7 @@ li + li { margin-top: 6px; }
   .steps-list { grid-template-columns: 1fr; }
   .steps-list li + li { border-left: none; border-top: 1px solid var(--line); }
   .meters, .split, .quality-list { grid-template-columns: 1fr; }
-  .tabs { grid-template-columns: 1fr 1fr; } /* 5 tabs: 2 + 2 + 1 */
+  .tabs { grid-template-columns: 1fr 1fr; } /* 6 tabs: 2 x 3 */
   .nav-links button { padding: 8px; font-size: 0.9rem; }
 }
 /* 5 nav links do not fit next to the logo on small screens */

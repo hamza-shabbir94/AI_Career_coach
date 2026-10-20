@@ -10,29 +10,13 @@ makes each prompt simple, and the second call can only use what was found.
 from fastapi import APIRouter
 
 from ai import MODEL, client
-from models import CompanyPrepAnalysis, CompanyPrepRequest, CompanyPrepResult, Source
+from models import CompanyPrepAnalysis, CompanyPrepRequest, CompanyPrepResult
 from prompts import company_prep_prompt, company_research_prompt, job_ad_block
+from web_search import collect_sources  # shared with routes/jobs.py
 
 router = APIRouter(prefix="/company", tags=["Company Prep"])
 
 MAX_SOURCES = 8
-
-
-def collect_sources(response) -> list[Source]:
-    """Find the web pages the AI cited (url_citation annotations), without duplicates."""
-    sources: list[Source] = []
-    seen_urls = set()
-    for item in response.output:            # the response is a list of items
-        if item.type != "message":          # skip the web_search_call items
-            continue
-        for part in item.content:           # each message has text parts
-            for note in getattr(part, "annotations", None) or []:
-                if note.type == "url_citation" and note.url not in seen_urls:
-                    seen_urls.add(note.url)
-                    sources.append(Source(title=note.title or note.url, url=note.url))
-                    if len(sources) >= MAX_SOURCES:
-                        return sources
-    return sources
 
 
 @router.post("/prep", response_model=CompanyPrepResult)
@@ -48,7 +32,7 @@ def company_prep(req: CompanyPrepRequest):
         input=f"Research the company: {req.company}{job_ad}",
     )
     notes = research.output_text
-    sources = collect_sources(research)
+    sources = collect_sources(research, MAX_SOURCES)
 
     # Call 2: turn the notes into a structured prep sheet. Web text goes inside tags.
     response = client.responses.parse(

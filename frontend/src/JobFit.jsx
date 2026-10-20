@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { postForm } from "./api";
 import ScoreRing from "./ScoreRing";
 import CVInput, { EMPTY_CV, addCVToForm, checkCV } from "./CVInput";
@@ -7,17 +7,30 @@ import CVInput, { EMPTY_CV, addCVToForm, checkCV } from "./CVInput";
 const STATUS_ORDER = { missing: 0, partial: 1, met: 2 };
 const STATUS_LABEL = { missing: "Missing", partial: "Partly", met: "Met" };
 
-// onBuildPlan comes from App.jsx (see "lifting state up" there)
-export default function JobFit({ onBuildPlan }) {
+// From App.jsx (see "lifting state up" there):
+// - onBuildPlan: send the gaps to the Learning plan tab
+// - seed: { job_role, job_description } from Job search ("Check my fit")
+export default function JobFit({ onBuildPlan, seed }) {
   // Inputs
   const [jobDescription, setJobDescription] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [cv, setCv] = useState(EMPTY_CV);
+  const [fromSearch, setFromSearch] = useState(false); // job ad came from Job search?
 
   // Result + UI state
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // A new seed from Job search: fill in the job and go back to the form (your CV stays)
+  useEffect(() => {
+    if (!seed) return;
+    setJobDescription(seed.job_description || "");
+    setJobRole(seed.job_role || "");
+    setFromSearch(true);
+    setResult(null);
+    setError("");
+  }, [seed]);
 
   async function checkFit() {
     if (jobDescription.trim().length < 50) return setError("Paste the full job ad (at least 50 characters).");
@@ -133,9 +146,14 @@ export default function JobFit({ onBuildPlan }) {
           id="fit-jd"
           rows={6}
           value={jobDescription}
-          onChange={(e) => setJobDescription(e.target.value)}
+          onChange={(e) => { setJobDescription(e.target.value); setFromSearch(false); }}
           placeholder="Paste the full job ad, including the requirements"
         />
+        {fromSearch && (
+          <p className="legend">
+            This is a short summary from Job search. For a more exact score, paste the full job ad from its link.
+          </p>
+        )}
       </div>
 
       <div className="field">

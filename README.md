@@ -18,7 +18,7 @@ Ironhack AI Engineer Bootcamp project.
 | ⭐ | Bonus: Company prep (with web search) | ✅ Done |
 | ⭐ | Bonus: Learning roadmap | ✅ Done |
 | ⭐ | Bonus: LLM-as-a-judge (checks the quality of CV reviews) | ✅ Done |
-| ⭐ | Bonus: job search | 💡 Next |
+| ⭐ | Bonus: Job search & discovery (with web search) | ✅ Done |
 
 ### 1. Mock Interview Mode
 1. **Setup** – enter the role (e.g. "Junior AI Engineer") and optionally paste a job description.
@@ -36,6 +36,17 @@ Ironhack AI Engineer Bootcamp project.
    with fixes, matching and missing skills, top improvements, and before/after rewrites of weak lines.
 4. **Optional quality check:** tick *"Quality check with a second AI (LLM-as-a-judge)"*. A second AI
    scores the review itself (see [LLM-as-a-judge](#llm-as-a-judge) below). It takes about twice as long.
+
+### ⭐ Bonus: Job search & discovery
+1. Enter the job title, and optionally the location, work type (remote / hybrid / on-site), level
+   and a few lines about you (your skills, so the best-fitting jobs come first).
+2. The AI **searches the web** (20-40 seconds): job boards and company career pages, for current ads.
+3. Get up to 10 job cards: title, company, location, work type, when it was posted, summary, key
+   requirements and why it fits you, plus tips to find more jobs like these.
+4. **Python checks every link:** a job only gets **"Checked link"** if its link is a page the web
+   search really cited. Otherwise you get a "Search for this job" button instead, because an AI can
+   write links that look real but do not exist.
+5. **"Check my fit"** sends the job to the Job fit tab, so you can compare it with your CV.
 
 ### ⭐ Bonus: Job-fit score
 1. Paste a job ad (and optionally the role), then upload or paste your CV.
@@ -78,11 +89,13 @@ career-coach/
 │   ├── prompts.py            ← all AI prompts
 │   ├── cv_reader.py          ← PDF / DOCX / TXT → text + get_cv_text() (shared CV checks)
 │   ├── judge.py              ← LLM-as-a-judge: scores a CV review, Python calculates the result
+│   ├── web_search.py         ← shared web-search helpers: collect_sources(), same_page()
 │   ├── routes/
 │   │   ├── interview.py      ← /interview/next, /interview/feedback
 │   │   ├── cv.py             ← /cv/review
 │   │   ├── job_fit.py        ← /job-fit (+ the match % maths)
 │   │   ├── company.py        ← /company/prep (web search + prep sheet)
+│   │   ├── jobs.py           ← /jobs/search (web search + job cards + link check)
 │   │   └── roadmap.py        ← /roadmap (learning plan + hours check)
 │   ├── evals/
 │   │   ├── run_judge.py      ← offline test: review + judge 3 sample CVs → table + results.csv
@@ -105,6 +118,7 @@ career-coach/
         ├── JobFit.jsx        ← bonus: job-fit score screen
         ├── CompanyPrep.jsx   ← bonus: company prep screen
         ├── RoadmapBuilder.jsx ← bonus: learning plan screen
+        ├── JobSearch.jsx     ← bonus: job search screen
         ├── api.js            ← all calls to the backend
         └── styles.css        ← all styles; colours and fonts are at the top
 ```
@@ -137,6 +151,7 @@ of `styles.css`, and every screen updates.
 | POST | `/cv/review` | **Form**: `job_role`, `job_description`, `file` **or** `cv_text`, optional `evaluate` (`true`/`false`, default `false`) | `overall_score`, `summary`, `content`, `clarity`, `formatting`, `errors`, `matching_skills`, `missing_skills`, `improvements`, `rewrites`, `evaluation` (`null`, or `criteria`, `overall_score`, `passed` when `evaluate=true`) |
 | POST | `/job-fit` | **Form**: `job_description` (min 50 chars), `job_role` (optional), and `file` **or** `cv_text` | `analysis` (`summary`, `requirements`, `keywords_to_add`, `quick_wins`), `match_percent`, `verdict` |
 | POST | `/company/prep` | JSON: `company` (1-100 chars), `job_role`, `job_description` (optional) | `analysis` (`overview`, `recent_news`, `culture`, `likely_questions`, `questions_to_ask`, `tips`), `sources` (`title`, `url`) |
+| POST | `/jobs/search` | JSON: `job_role` (1-100 chars), `location` (optional), `work_type` (`any` / `remote` / `hybrid` / `on-site`), `level` (`any` / `entry` / `junior` / `mid` / `senior`), `about_me` (optional, max 3000 chars) | `jobs` (`title`, `company`, `location`, `work_type`, `url`, `posted`, `summary`, `key_requirements`, `why_relevant`, `verified`), `search_tips`, `sources` |
 | POST | `/roadmap` | JSON: `job_role`, `level` (`beginner` / `some experience` / `experienced`), `hours_per_week` (2-40), `weeks` (4, 8 or 12), `gaps` (optional list), `context` (optional, max 5000 chars) | `roadmap` (`summary`, `weeks`, `portfolio_project`, `resources`), `total_hours`, `warnings` |
 
 Try every endpoint at **http://localhost:8000/docs**.
@@ -193,7 +208,19 @@ to the result screens. When you click "Build my learning plan", the child calls 
 which sends the data *up* to `App`. `App` then passes `roadmapSeed` *down* to `RoadmapBuilder`,
 whose `useEffect` fills in the form. The same pattern connects Company prep to the Mock interview:
 `CompanyPrep` calls `practiseInterview(...)`, `App` keeps `interviewSeed`, and `InterviewMode`
-receives it as the `seed` prop.
+receives it as the `seed` prop. And Job search → Job fit: `JobSearch` calls `checkFit(...)`,
+`App` keeps `jobFitSeed`, and `JobFit` receives it as `seed`.
+
+**Never trust AI links blindly** – Job search asks the AI to copy each job link from the search
+results, but an AI can still write a link that looks real and does not exist. So Python compares
+every job link with the pages the web search really cited (`url_citation`). `same_page()` ignores
+small differences (`https://`, `www.`, `?utm_source=...`, a `/` at the end). Only matching links get
+`verified: true`. For the others the app shows a Google search for the job instead.
+
+**Why web search and not a job API?** Job APIs (e.g. Adzuna, or LinkedIn's partner API) need extra
+sign-ups and keys, and often cover only some countries. The `web_search` tool uses the OpenAI key we
+already have and can search any job board or career page. The trade-off: results are less
+structured, so we add the two-step "search → structure" calls and the link check.
 
 **Optional prompt parts** – the interview prompts only add the company rules when a company is
 given (`if company.strip(): ...`). With no company, the prompt is exactly the normal one, so one
@@ -352,4 +379,4 @@ In the **backend** project, add `ALLOWED_ORIGINS` = your frontend URL
 - [x] Mock interview for a specific company (connected to Company prep)
 - [ ] Deploy to Vercel
 - [x] Bonus: LLM-as-a-judge + offline eval script
-- [ ] More bonus features (job search)
+- [x] Bonus: Job search & discovery (connected to Job fit)
