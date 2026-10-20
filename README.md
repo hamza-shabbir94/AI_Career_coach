@@ -111,7 +111,9 @@ career-coach/
         ├── main.jsx          ← starts React
         ├── App.jsx           ← page layout: nav, hero, steps, tabs, footer
         ├── Hero.jsx          ← big headline + animated demo
-        ├── ScoreRing.jsx     ← round score gauge, shows /10 or %
+        ├── ScoreRing.jsx     ← round score gauge (/10, % or /5), fills up from 0
+        ├── LoadingSteps.jsx  ← progress steps while web search runs
+        ├── storage.js        ← save/load small data in the browser (localStorage)
         ├── CVInput.jsx       ← shared "Your CV" box (upload / paste, drag & drop)
         ├── InterviewMode.jsx ← feature 1 screen
         ├── CVReviewer.jsx    ← feature 2 screen
@@ -146,7 +148,7 @@ of `styles.css`, and every screen updates.
 | Method | Path | Sends | Returns |
 |--------|------|-------|---------|
 | GET | `/` | – | `{"status": "ok"}` |
-| POST | `/interview/next` | JSON: `job_role`, `job_description`, `summary`, `last_question`, `last_answer`, `answers_given`, optional `company` (max 100 chars) + `company_notes` (max 6000 chars) | `reply`, `summary`, `question_number`, `max_questions`, `finished` |
+| POST | `/interview/next` | JSON: `job_role`, `job_description`, `summary`, `last_question`, `last_answer`, `answers_given`, optional `company` (max 100 chars) + `company_notes` (max 6000 chars) + `first_question` (max 500 chars, asked as question 1) | `reply`, `summary`, `question_number`, `max_questions`, `finished` |
 | POST | `/interview/feedback` | JSON: `job_role`, `summary`, optional `company` + `company_notes` | `score`, `summary`, `strengths`, `weaknesses`, `improvements` |
 | POST | `/cv/review` | **Form**: `job_role`, `job_description`, `file` **or** `cv_text`, optional `evaluate` (`true`/`false`, default `false`) | `overall_score`, `summary`, `content`, `clarity`, `formatting`, `errors`, `matching_skills`, `missing_skills`, `improvements`, `rewrites`, `evaluation` (`null`, or `criteria`, `overall_score`, `passed` when `evaluate=true`) |
 | POST | `/job-fit` | **Form**: `job_description` (min 50 chars), `job_role` (optional), and `file` **or** `cv_text` | `analysis` (`summary`, `requirements`, `keywords_to_add`, `quick_wins`), `match_percent`, `verdict` |
@@ -237,9 +239,35 @@ numbers ("greater or equal 2, less or equal 40"), and `Literal[4, 8, 12]` allows
 
 **Environment variables** – secrets (API key) and settings live in `.env`, never in the code or git.
 
+**localStorage** – a small storage box in your browser, one per website. It keeps data after a
+refresh (saved jobs, the learning plan and its ticked tasks). It lives only in *this* browser on
+*this* device, the backend never sees it, and any JavaScript on the page can read it. So it is
+fine for harmless data, but **never** for secrets like API keys or passwords. `storage.js` wraps it
+in `try/catch`, because some browsers block it (e.g. private mode); then the app works but forgets.
+
+**Same formula in two places** – Job fit's "what if" score is calculated in the browser (instant,
+no AI call), so the formula exists twice: `calculate_match()` in Python and `matchPercent()` in
+`JobFit.jsx`. Both round .5 **up** (62.5 → 63). Python's `round()` would give 62 (it rounds .5 to
+the nearest even number), so Python uses `math.floor(x + 0.5)`. If you change one, change the other.
+
 **Inheritance in Pydantic** – `class CVReviewResult(CVReview)` gets every field of `CVReview` and
 adds `evaluation`. The reviewer AI fills in `CVReview` (so it never has to grade itself); the
 endpoint returns `CVReviewResult`.
+
+---
+
+## Interactive features
+
+All in the browser: no extra AI calls, except "Practise this question".
+
+| Feature | What you can do |
+|---------|-----------------|
+| **Job search** | Filter results (*All · Checked links · Saved · Remote · Hybrid · On-site*) and by word. Save jobs with ☆; saved jobs stay after a refresh and show under the search form. Cards are compact; "Show details" opens the summary and requirements. |
+| **Job fit** | Tick *"I'll work on this"* on a gap and the score ring updates live ("62% now → 78%"). Filter requirements by *Missing / Partly / Met*. Click a keyword chip to copy it. |
+| **Learning plan** | Tick off tasks; see overall and per-week progress. Weeks open and close; finished weeks get a green ✓. The plan and your ticks are saved in the browser. |
+| **Company prep** | Mark questions as prepared (with a counter). Copy all "questions to ask" at once. **"Practise this question"** starts the company mock interview with that question first. |
+| **Review quality** | "What does this score mean?" shows the rubric, with the line(s) closest to your score highlighted. |
+| **Everywhere** | Score rings fill up from 0; the slow web-search features show progress steps while you wait. Animations are off if your system asks for reduced motion. |
 
 ---
 

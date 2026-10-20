@@ -384,7 +384,8 @@ li + li { margin-top: 6px; }
 .week-card { background: var(--desk); border-radius: var(--radius); padding: 16px 18px; }
 .tasks { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .tasks li + li { margin-top: 0; }
-.tasks li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline; font-size: 0.95rem; }
+.tasks { margin-top: 14px; }
+.tasks li { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: baseline; font-size: 0.95rem; }
 .task-tag { border-radius: 999px; padding: 1px 9px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .task-tag.learn { background: var(--ink); color: #fff; }
 .task-tag.build { background: var(--mint-soft); color: var(--mint); }
@@ -420,6 +421,96 @@ li + li { margin-top: 6px; }
 .job .actions { align-items: center; margin-top: 4px; }
 a.btn { display: inline-block; text-decoration: none; }
 
+/* =========================================================
+   Interactive extras (filters, ticks, progress, toggles)
+   ========================================================= */
+
+/* Loading steps for the slow web-search features */
+.loading-steps { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 0.95rem; }
+.loading-steps li + li { margin-top: 0; }
+.loading-steps li { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.loading-steps li.now { color: var(--ink); font-weight: 600; }
+.loading-steps li.done { color: var(--mint); }
+.loading-dot {
+  display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--line); font-size: 0.7rem; font-weight: 800; flex: none;
+}
+.loading-steps .done .loading-dot { background: var(--mint); border-color: var(--mint); color: #fff; }
+.loading-steps .now .loading-dot { border-color: var(--highlight); background: var(--highlight-soft); animation: blink 1.2s infinite; }
+
+/* Small "progress" bars (weeks, prepared questions) */
+.mini-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.mini-bar span { display: block; height: 100%; background: var(--mint); border-radius: 3px; transition: width 0.4s ease-out; }
+.meter-bar.progress span { background: var(--mint); transition: width 0.4s ease-out; }
+.progress-box { background: var(--desk); border-radius: var(--radius); padding: 18px; }
+.progress-box h3 { margin: 0; }
+.progress-box .meter-head span { font-family: var(--display); font-weight: 800; font-size: 1.15rem; }
+
+/* Small checkboxes (inputs are full-width by default, so reset that) */
+.check-small { font-weight: 600; font-size: 0.9rem; gap: 8px; align-items: center; }
+.check-small input { width: 16px; height: 16px; margin: 0; }
+.tasks input[type="checkbox"] { width: 18px; height: 18px; margin: 0; padding: 0; accent-color: var(--mint); cursor: pointer; align-self: center; }
+.tasks li.done .task-title { color: var(--muted); text-decoration: line-through; }
+
+/* Job search: filters, save, compact cards */
+.filter-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.filter-chip {
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  border-radius: 999px; padding: 5px 12px; font-size: 0.88rem; font-weight: 600;
+}
+.filter-chip span { color: var(--muted); font-weight: 500; margin-left: 2px; }
+.filter-chip:hover { border-color: var(--ink); }
+.filter-chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.filter-chip.on span { color: rgba(255, 255, 255, 0.7); }
+.filter-word { max-width: 240px; padding: 8px 12px; font-size: 0.92rem; }
+.job-head-right { display: flex; align-items: center; gap: 8px; flex: none; }
+.save-btn {
+  border: none; background: none; font-size: 1.4rem; line-height: 1; color: var(--muted);
+  width: 36px; height: 36px; border-radius: 50%;
+}
+.save-btn:hover { background: var(--highlight-soft); color: var(--ink); }
+.save-btn.on { color: #e0a800; }
+.job-details { display: flex; flex-direction: column; gap: 10px; animation: rise 0.25s both; }
+.empty { color: var(--muted); padding: 20px; text-align: center; background: var(--desk); border-radius: var(--radius); }
+.saved-jobs { border-top: 2px dashed var(--line); padding-top: 24px; }
+
+/* Job fit: what-if, filter, ticked gaps, copy chips */
+.what-if { margin: 8px 0; font-weight: 600; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.what-if strong { color: var(--mint); font-family: var(--display); font-size: 1.2rem; }
+.req-filter { margin-bottom: 12px; }
+.req .check-small { margin-top: 10px; }
+.req.closed { border-left-color: var(--mint); background: var(--mint-soft); }
+.chip-btn { border: 2px dashed #e0a800; cursor: pointer; font: inherit; font-size: 0.92rem; font-weight: 600; }
+.chip-btn:hover { background: var(--highlight-soft); }
+
+/* Learning plan: weeks that open and close */
+.week-toggle {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  border: none; background: none; padding: 0 0 10px; text-align: left; color: var(--ink);
+}
+.week-focus { display: block; font-family: var(--display); font-size: 1.1rem; margin-bottom: 2px; }
+.week-sub { color: var(--muted); font-size: 0.88rem; font-weight: 600; }
+.chevron { font-size: 1.1rem; color: var(--muted); transition: transform 0.2s; }
+.chevron.open { transform: rotate(180deg); }
+.week.complete .week-num { background: var(--mint); }
+.week.complete .week-card { background: var(--mint-soft); }
+
+/* Company prep: prepared questions */
+.qa.prepared { border-color: var(--mint); }
+.qa-check { color: var(--mint); font-weight: 800; margin-right: 8px; }
+.qa-actions { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); justify-content: space-between; align-items: center; }
+.qa-actions .check-small { cursor: pointer; }
+.field-row h3 { margin: 0; }
+
+/* Review quality: the rubric on demand */
+.rubric-toggle { margin-top: 12px; }
+.rubric { list-style: none; padding: 0; margin-top: 8px; font-size: 0.88rem; color: var(--muted); }
+.rubric li { padding: 6px 10px; border-radius: var(--radius-sm); }
+.rubric li + li { margin-top: 2px; }
+.rubric li.near { background: var(--highlight-soft); color: var(--ink); }
+.rubric strong { font-family: var(--display); margin-right: 6px; }
+
 /* ---------- Footer ---------- */
 .footer { max-width: 880px; margin: 64px auto 0; padding: 32px 24px 48px; text-align: center; color: var(--muted); font-size: 0.9rem; }
 .footer p + p { margin-top: 4px; }
@@ -448,8 +539,10 @@ a.btn { display: inline-block; text-decoration: none; }
   .errors li { grid-template-columns: 1fr; gap: 4px; }
   .bubble { max-width: 88%; }
   .plan-row { grid-template-columns: 1fr; gap: 24px; }
-  .tasks li { grid-template-columns: auto 1fr; }
-  .task-hours { grid-column: 2; }
+  .tasks li { grid-template-columns: auto auto 1fr; }
+  .task-hours { grid-column: 3; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-word { max-width: none; }
 }
 
 /* Respect people who turn off animations */

@@ -25,6 +25,63 @@ const CRITERIA_LABELS = {
   completeness: "Completeness",
 };
 
+// The rubric, shown under "What does this score mean?".
+// A short copy of JUDGE_RUBRIC in backend/prompts.py: keep them in sync.
+const RUBRIC = {
+  factual_accuracy: {
+    5: "Every claim (skills, jobs, numbers, errors, quoted lines) can be found in the CV.",
+    3: "Mostly correct, but 1-2 small claims are not supported by the CV.",
+    1: "Invents skills, jobs, numbers or errors, or quotes lines that are not in the CV.",
+  },
+  relevance: {
+    5: "Almost every point is linked to this role or job ad.",
+    3: "A mix of role-specific points and generic CV advice.",
+    1: "Generic advice that would fit any CV and any job.",
+  },
+  actionability: {
+    5: "Every tip says exactly what to change and how; rewrites are clearly better.",
+    3: "Some tips are concrete, others vague.",
+    1: "Vague tips only, nothing you can act on.",
+  },
+  completeness: {
+    5: "Content, clarity, formatting, errors, skills and rewrites are all covered well.",
+    3: "All parts are there, but 1-2 are thin or missed obvious problems.",
+    1: "Several parts are missing, empty or meaningless.",
+  },
+};
+
+// One criterion: score bar, reasons, issues, and the rubric on demand
+function CriterionCard({ c }) {
+  const [showRubric, setShowRubric] = useState(false);
+  return (
+    <div className="meter">
+      <div className="meter-head">
+        <h3>{CRITERIA_LABELS[c.criterion]}</h3>
+        <span>{c.score}/5</span>
+      </div>
+      <div className="meter-bar"><span style={{ width: `${c.score * 20}%` }} /></div>
+      <p className="quality-why">{c.justification}</p>
+      {c.issues.length > 0 && (
+        <ul className="quality-issues">{c.issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
+      )}
+
+      <button className="btn-link-small rubric-toggle" onClick={() => setShowRubric(!showRubric)} aria-expanded={showRubric}>
+        {showRubric ? "Hide the rubric" : "What does this score mean?"}
+      </button>
+      {showRubric && (
+        <ul className="rubric">
+          {[5, 3, 1].map((level) => (
+            // Highlight the line(s) closest to the score: a 4 is between 3 and 5, so both light up
+            <li key={level} className={Math.abs(level - c.score) <= 1 ? "near" : ""}>
+              <strong>{level}</strong> {RUBRIC[c.criterion][level]}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // "Review quality" section: the result of the second AI (LLM-as-a-judge)
 function ReviewQuality({ evaluation }) {
   return (
@@ -48,19 +105,7 @@ function ReviewQuality({ evaluation }) {
       </div>
 
       <div className="quality-list">
-        {evaluation.criteria.map((c) => (
-          <div key={c.criterion} className="meter">
-            <div className="meter-head">
-              <h3>{CRITERIA_LABELS[c.criterion]}</h3>
-              <span>{c.score}/5</span>
-            </div>
-            <div className="meter-bar"><span style={{ width: `${c.score * 20}%` }} /></div>
-            <p className="quality-why">{c.justification}</p>
-            {c.issues.length > 0 && (
-              <ul className="quality-issues">{c.issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
-            )}
-          </div>
-        ))}
+        {evaluation.criteria.map((c) => <CriterionCard key={c.criterion} c={c} />)}
       </div>
     </div>
   );

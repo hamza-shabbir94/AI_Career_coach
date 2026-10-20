@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { postJson } from "./api";
+import { loadJSON, saveJSON } from "./storage";
 
 const LEVELS = [
   { id: "beginner", label: "Beginner" },
@@ -9,6 +10,36 @@ const LEVELS = [
 const WEEK_OPTIONS = [4, 8, 12];
 const MAX_GAPS = 12;           // same limit as the backend
 const MAX_CONTEXT_CHARS = 5000;
+const PLAN_KEY = "career-coach:learning-plan"; // the last plan + ticked tasks, in localStorage
+
+// Each task gets an id like "3-1" (week 3, task 2), to remember which ones are done
+function taskId(week, index) {
+  return `${week.week_number}-${index}`;
+}
+
+// Tasks and hours done in one week
+function weekStats(week, done) {
+  let tasksDone = 0;
+  let hoursDone = 0;
+  let hours = 0;
+  week.tasks.forEach((t, i) => {
+    hours += t.hours;
+    if (done.includes(taskId(week, i))) {
+      tasksDone += 1;
+      hoursDone += t.hours;
+    }
+  });
+  return { tasksDone, tasks: week.tasks.length, hoursDone, hours };
+}
+
+// The first week that is not finished yet (this one is open by default)
+function firstOpenWeek(roadmap, done) {
+  const week = roadmap.weeks.find((w) => {
+    const st = weekStats(w, done);
+    return st.tasksDone < st.tasks;
+  });
+  return (week || roadmap.weeks[roadmap.weeks.length - 1])?.week_number;
+}
 
 // Remove empty items and duplicates, keep at most MAX_GAPS
 function cleanGaps(list) {
@@ -35,18 +66,29 @@ export default function RoadmapBuilder({ seed }) {
   const [newGap, setNewGap] = useState("");
   const [context, setContext] = useState("");
 
-  // Result + UI state
-  const [result, setResult] = useState(null);
+  // The plan: { result, jobRole, hoursPerWeek, done } (done = ids of ticked tasks).
+  // Loaded from localStorage on the first render, so it survives a page refresh.
+  const [plan, setPlan] = useState(() => loadJSON(PLAN_KEY, null));
+  const [showPlan, setShowPlan] = useState(plan !== null); // false = show the form
+  const [openWeeks, setOpenWeeks] = useState(() =>
+    plan ? [firstOpenWeek(plan.result.roadmap, plan.done)] : []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // When a new seed arrives, fill in the form (and go back from an old result to the form)
+  // Change the plan AND save it in the browser (null = delete it)
+  function updatePlan(next) {
+    setPlan(next);
+    saveJSON(PLAN_KEY, next);
+  }
+
+  // When a new seed arrives, fill in the form (your saved plan stays, see the banner)
   useEffect(() => {
     if (!seed) return;
     setJobRole(seed.job_role || "");
     setGaps(cleanGaps(seed.gaps || []));
     setContext((seed.context || "").slice(0, MAX_CONTEXT_CHARS));
-    setResult(null);
+    setShowPlan(false);
     setError("");
   }, [seed]);
 
@@ -70,6 +112,17 @@ export default function RoadmapBuilder({ seed }) {
     }
   }
 
+  // Tick / untick a task
+  function toggleTask(id) {
+    const done = plan.done.includes(id) ? plan.done.filter((x) => x !== id) : [...plan.done, id];
+    updatePlan({ ...plan, done });
+  }
+
+  // Open / close a week
+  function toggleWeek(n) {
+    setOpenWeeks(openWeeks.includes(n) ? openWeeks.filter((x) => x !== n) : [...openWeeks, n]);
+  }
+
   async function buildPlan() {
     if (!jobRole.trim()) return setError("Enter the role you are learning for.");
     if (!(hoursPerWeek >= 2 && hoursPerWeek <= 40)) return setError("Hours per week must be between 2 and 40.");
@@ -85,7 +138,10 @@ export default function RoadmapBuilder({ seed }) {
         gaps,
         context,
       });
-      setResult(data);
+      // A new plan replaces the old one, with nothing ticked yet
+      updatePlan({ result: data, jobRole, hoursPerWeek, done: [] });
+      setOpenWeeks([data.roadmap.weeks[0]?.week_number]);
+      setShowPlan(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,15 +150,35 @@ export default function RoadmapBuilder({ seed }) {
   }
 
   // ---------- RESULT ----------
-  if (result) {
-    const { roadmap, total_hours, warnings } = result;
+  if (plan && showPlan) {
+    const { roadmap, total_hours, warnings } = plan.result;
+
+    // Progress for the whole plan
+    const allStats = roadmap.weeks.map((w) => weekStats(w, plan.done));
+    const tasksDone = allStats.reduce((sum, st) => sum + st.tasksDone, 0);
+    const tasksTotal = allStats.reduce((sum, st) => sum + st.tasks, 0);
+    const hoursDone = allStats.reduce((sum, st) => sum + st.hoursDone, 0);
+    const progress = tasksTotal === 0 ? 0 : Math.round((tasksDone / tasksTotal) * 100);
+
     return (
       <div className="pane">
         <div>
-          <h2 className="result-title">Your plan: {jobRole}</h2>
+          <h2 className="result-title">Your plan: {plan.jobRole}</h2>
           <p className="lead">{roadmap.summary}</p>
           <p className="plan-stats">
-            {roadmap.weeks.length} weeks · {total_hours} hours in total · {hoursPerWeek} h per week
+            {roadmap.weeks.length} weeks · {total_hours} hours in total · {plan.hoursPerWeek} h per week
+          </p>
+        </div>
+
+        <div className="progress-box">
+          <div className="meter-head">
+            <h3>Your progress</h3>
+            <span>{progress}%</span>
+          </div>
+          <div className="meter-bar progress"><span style={{ width: `${progress}%` }} /></div>
+          <p className="legend">
+            {tasksDone} of {tasksTotal} tasks · {hoursDone} of {total_hours} hours done.
+            Tick tasks as you go. Your progress is saved in this browser.
           </p>
         </div>
 
@@ -114,24 +190,56 @@ export default function RoadmapBuilder({ seed }) {
         )}
 
         <ol className="timeline">
-          {roadmap.weeks.map((w) => (
-            <li key={w.week_number} className="week">
-              <span className="week-num">{w.week_number}</span>
-              <div className="week-card">
-                <h3>{w.focus}</h3>
-                <ul className="tasks">
-                  {w.tasks.map((t, i) => (
-                    <li key={i}>
-                      <span className={`task-tag ${t.type}`}>{t.type}</span>
-                      <span className="task-title">{t.title}</span>
-                      <span className="task-hours">{t.hours} h</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="milestone"><strong>Milestone:</strong> {w.milestone}</p>
-              </div>
-            </li>
-          ))}
+          {roadmap.weeks.map((w, wi) => {
+            const st = allStats[wi];
+            const complete = st.tasks > 0 && st.tasksDone === st.tasks;
+            const open = openWeeks.includes(w.week_number);
+            return (
+              <li key={w.week_number} className={complete ? "week complete" : "week"}>
+                <span className="week-num">{complete ? "✓" : w.week_number}</span>
+                <div className="week-card">
+                  {/* Click the header to open or close the week */}
+                  <button className="week-toggle" onClick={() => toggleWeek(w.week_number)} aria-expanded={open}>
+                    <span>
+                      <strong className="week-focus">{w.focus}</strong>
+                      <span className="week-sub">
+                        Week {w.week_number} · {st.tasksDone}/{st.tasks} tasks · {st.hours} h
+                      </span>
+                    </span>
+                    <span className={open ? "chevron open" : "chevron"} aria-hidden="true">▾</span>
+                  </button>
+                  <div className="mini-bar">
+                    <span style={{ width: `${st.tasks ? (st.tasksDone / st.tasks) * 100 : 0}%` }} />
+                  </div>
+
+                  {open && (
+                    <>
+                      <ul className="tasks">
+                        {w.tasks.map((t, i) => {
+                          const id = taskId(w, i);
+                          const isDone = plan.done.includes(id);
+                          return (
+                            <li key={i} className={isDone ? "done" : ""}>
+                              <input
+                                type="checkbox"
+                                checked={isDone}
+                                onChange={() => toggleTask(id)}
+                                aria-label={`Done: ${t.title}`}
+                              />
+                              <span className={`task-tag ${t.type}`}>{t.type}</span>
+                              <span className="task-title">{t.title}</span>
+                              <span className="task-hours">{t.hours} h</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <p className="milestone"><strong>Milestone:</strong> {w.milestone}</p>
+                    </>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ol>
 
         <div className="todo">
@@ -149,7 +257,7 @@ export default function RoadmapBuilder({ seed }) {
           <p className="legend">Search for these by name. The AI gives no links, because it can invent fake ones.</p>
         </div>
 
-        <button className="btn btn-primary" onClick={() => setResult(null)}>Change my plan</button>
+        <button className="btn btn-primary" onClick={() => setShowPlan(false)}>Make a new plan</button>
       </div>
     );
   }
@@ -161,6 +269,16 @@ export default function RoadmapBuilder({ seed }) {
         <h2>What do you want to learn?</h2>
         <p>Get a week-by-week plan that fits your time, with one portfolio project.</p>
       </div>
+
+      {plan && (
+        <div className="company-banner">
+          <p>You have a saved plan for <strong>{plan.jobRole}</strong>. A new plan will replace it.</p>
+          <span className="actions">
+            <button className="btn-link-small" onClick={() => setShowPlan(true)}>Open my plan</button>
+            <button className="btn-link-small" onClick={() => updatePlan(null)}>Delete it</button>
+          </span>
+        </div>
+      )}
 
       <div className="field">
         <label htmlFor="rm-role">Role</label>

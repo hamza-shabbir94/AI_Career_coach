@@ -5,6 +5,8 @@ Compares a CV with a job ad. The AI only LABELS each requirement
 (must-have / nice-to-have, met / partial / missing). Python then calculates
 the percentage, so the score is consistent and easy to explain.
 """
+import math
+
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from ai import MODEL, client
@@ -28,7 +30,9 @@ def calculate_match(analysis: JobFitAnalysis) -> int:
     if possible == 0:
         return 0
     earned = sum(WEIGHTS[r.importance] * CREDIT[r.status] for r in analysis.requirements)
-    return round(earned / possible * 100)
+    # Round .5 UP, like at school and like Math.round() in JobFit.jsx ("what if" score).
+    # (Python's round() would turn 62.5 into 62, because it rounds .5 to the nearest even number.)
+    return math.floor(earned / possible * 100 + 0.5)
 
 
 def verdict_for(percent: int) -> str:

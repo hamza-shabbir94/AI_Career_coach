@@ -36,6 +36,7 @@ def next_question(req: NextRequest):
         instructions=interviewer_prompt(
             req.job_role, req.job_description, question_number, finished,
             req.company, req.company_notes,  # both empty for a normal interview
+            req.first_question,              # only used for question 1
         ),
         input=input_text,
         text_format=NextStep,

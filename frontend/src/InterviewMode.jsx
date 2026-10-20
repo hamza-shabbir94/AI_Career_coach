@@ -7,7 +7,7 @@ const EXAMPLE_ROLES = ["Junior AI Engineer", "DevOps Engineer", "Data Analyst", 
 
 // From App.jsx (see "lifting state up" there):
 // - onBuildPlan: send the feedback to the Learning plan tab
-// - seed: { job_role, company, company_notes, job_description } from Company prep
+// - seed: { job_role, company, company_notes, job_description, first_question } from Company prep
 export default function InterviewMode({ onBuildPlan, seed }) {
   // Which screen we show: "setup" -> "interview" -> "feedback"
   const [stage, setStage] = useState("setup");
@@ -17,6 +17,7 @@ export default function InterviewMode({ onBuildPlan, seed }) {
   const [jobDescription, setJobDescription] = useState("");
   const [company, setCompany] = useState("");           // empty = normal interview
   const [companyNotes, setCompanyNotes] = useState(""); // research from Company prep
+  const [firstQuestion, setFirstQuestion] = useState(""); // "Practise this question" in Company prep
 
   // Interview state
   const [messages, setMessages] = useState([]); // ONLY for showing the chat on screen
@@ -41,12 +42,14 @@ export default function InterviewMode({ onBuildPlan, seed }) {
     setCompany(seed.company || "");
     setCompanyNotes(seed.company_notes || "");
     setJobDescription(seed.job_description || "");
+    setFirstQuestion(seed.first_question || "");
   }, [seed]);
 
   // "Remove company" link: back to a normal interview
   function removeCompany() {
     setCompany("");
     setCompanyNotes("");
+    setFirstQuestion("");
   }
 
   // Keep the chat scrolled to the newest message
@@ -70,6 +73,7 @@ export default function InterviewMode({ onBuildPlan, seed }) {
         answers_given: answersCount,
         company,                      // both "" for a normal interview
         company_notes: companyNotes,
+        first_question: firstQuestion, // the backend only uses it for question 1
       });
       setMessages([...chat, { role: "assistant", content: data.reply }]);
       setSummary(data.summary); // save the updated memory
@@ -150,6 +154,7 @@ export default function InterviewMode({ onBuildPlan, seed }) {
             <p>
               Practising for <strong>{company}</strong>. Expect questions about the company,
               its products and its values.
+              {firstQuestion && <><br />First question: <em>"{firstQuestion}"</em></>}
             </p>
             <button className="btn-link-small" onClick={removeCompany}>Remove company</button>
           </div>

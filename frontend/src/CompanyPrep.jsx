@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { postJson } from "./api";
+import LoadingSteps from "./LoadingSteps";
 
 const MAX_NOTES_CHARS = 6000; // same limit as the backend (company_notes in models.py)
+const LOADING_STEPS = ["Searching the web", "Reading news and reviews", "Writing your prep sheet"];
 
 // Turn the prep sheet into short plain-text notes for the mock interviewer
 function buildCompanyNotes(analysis) {
@@ -26,6 +28,36 @@ export default function CompanyPrep({ onPractise }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Interactive result
+  const [prepared, setPrepared] = useState([]); // indexes of questions marked as prepared
+  const [copied, setCopied] = useState(false);
+
+  // Start the company mock interview (firstQuestion = "Practise this question", optional)
+  function practise(firstQuestion = "") {
+    onPractise({
+      job_role: jobRole,
+      company,
+      company_notes: buildCompanyNotes(result.analysis),
+      job_description: jobDescription,
+      first_question: firstQuestion,
+    });
+  }
+
+  function togglePrepared(i) {
+    setPrepared(prepared.includes(i) ? prepared.filter((x) => x !== i) : [...prepared, i]);
+  }
+
+  // Copy all "questions to ask" as a list, then show "Copied!" for 1.5 seconds
+  async function copyQuestions() {
+    try {
+      await navigator.clipboard.writeText(result.analysis.questions_to_ask.map((q) => `- ${q}`).join("\n"));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false); // copying can be blocked by the browser; nothing breaks
+    }
+  }
+
   async function prepare() {
     if (!company.trim()) return setError("Enter the company name.");
     if (!jobRole.trim()) return setError("Enter the role you are interviewing for.");
@@ -39,6 +71,7 @@ export default function CompanyPrep({ onPractise }) {
         job_description: jobDescription,
       });
       setResult(data);
+      setPrepared([]); // a new prep sheet starts with nothing prepared
     } catch (err) {
       setError(err.message);
     } finally {
@@ -74,19 +107,40 @@ export default function CompanyPrep({ onPractise }) {
         <div className="block">
           <h3>Questions they will likely ask</h3>
           {/* <details> = a card that opens on click, no JavaScript needed */}
+          <p className="legend">
+            Prepared {prepared.length} of {analysis.likely_questions.length}. Open a question to see tips.
+          </p>
+          <div className="mini-bar">
+            <span style={{ width: `${(prepared.length / Math.max(analysis.likely_questions.length, 1)) * 100}%` }} />
+          </div>
           <div className="qa-list">
             {analysis.likely_questions.map((q, i) => (
-              <details key={i} className="qa">
-                <summary>{q.question}</summary>
+              <details key={i} className={prepared.includes(i) ? "qa prepared" : "qa"}>
+                <summary>
+                  {prepared.includes(i) && <span className="qa-check" aria-label="Prepared">✓</span>}
+                  {q.question}
+                </summary>
                 <p><strong>Why they ask:</strong> {q.why_they_ask}</p>
                 <p><strong>How to answer:</strong> {q.how_to_answer}</p>
+                <div className="actions qa-actions">
+                  <label className="check check-small">
+                    <input type="checkbox" checked={prepared.includes(i)} onChange={() => togglePrepared(i)} />
+                    <span>Mark as prepared</span>
+                  </label>
+                  <button className="btn-link-small" onClick={() => practise(q.question)}>
+                    Practise this question →
+                  </button>
+                </div>
               </details>
             ))}
           </div>
         </div>
 
         <div className="block">
-          <h3>Questions you can ask them</h3>
+          <div className="field-row">
+            <h3>Questions you can ask them</h3>
+            <button className="btn-link-small" onClick={copyQuestions}>{copied ? "Copied!" : "Copy all"}</button>
+          </div>
           <ul>{analysis.questions_to_ask.map((s, i) => <li key={i}>{s}</li>)}</ul>
         </div>
 
@@ -112,12 +166,7 @@ export default function CompanyPrep({ onPractise }) {
         <div className="actions">
           <button
             className="btn btn-highlight"
-            onClick={() => onPractise({
-              job_role: jobRole,
-              company,
-              company_notes: buildCompanyNotes(analysis),
-              job_description: jobDescription,
-            })}
+            onClick={() => practise()}
           >
             Practise an interview for {company}
           </button>
@@ -168,11 +217,12 @@ export default function CompanyPrep({ onPractise }) {
         />
       </div>
 
-      <p className="hint">Web research takes 20-40 seconds. Keep this tab open.</p>
+      {!loading && <p className="hint">Web research takes 20-40 seconds. Keep this tab open.</p>}
 
       <button className="btn btn-primary btn-lg" onClick={prepare} disabled={loading}>
         {loading ? `Researching ${company}…` : "Prepare me"}
       </button>
+      {loading && <LoadingSteps steps={LOADING_STEPS} />}
       {error && <p className="error">{error}</p>}
     </div>
   );

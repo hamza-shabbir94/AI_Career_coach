@@ -21,6 +21,7 @@ class NextRequest(BaseModel):
     # Optional: practise for a specific company (filled in from Company prep)
     company: str = Field("", max_length=100)
     company_notes: str = Field("", max_length=6000)  # overview, culture, likely questions
+    first_question: str = Field("", max_length=500)  # optional: ask THIS question first
 
 
 class NextStep(BaseModel):
