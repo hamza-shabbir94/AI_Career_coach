@@ -1,0 +1,15 @@
+# Secrets - never push these
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node / React
+node_modules/
+dist/
+
+# OS
+.DS_Store
